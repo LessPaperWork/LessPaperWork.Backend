@@ -31,12 +31,18 @@ namespace LessPaper.Shared.Interfaces.Database.Manager
         Task<string[]> DeleteUser(string requestingUserId, string userId);
 
         /// <summary>
-        /// Receive basic information about a user.
-        /// Such as the hashed password or the root directory id
+        /// Get public user information 
         /// </summary>
         /// <param name="requestingUserId">Id of the requesting user</param>
-        /// <param name="userId"></param>
+        /// <param name="userId">Target user</param>
         /// <returns></returns>
-        Task<IMinimalUserInformation> GetBasicUserInformation(string requestingUserId, string userId);
+        Task<IBasicUserInformation> GetBasicUserInformation(string requestingUserId, string userId);
+
+        /// <summary>
+        /// Get private user information 
+        /// </summary>
+        /// <param name="email">Id of the requesting user</param>
+        /// <returns></returns>
+        Task<IExtendedUserInformation> GetUserInformation(string email);
     }
 }

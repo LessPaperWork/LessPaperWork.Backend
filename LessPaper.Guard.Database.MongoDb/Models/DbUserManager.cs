@@ -141,7 +141,7 @@ namespace LessPaper.Guard.Database.MongoDb.Models
         }
 
         /// <inheritdoc />
-        public async Task<IMinimalUserInformation> GetBasicUserInformation(string requestingUserId, string userId)
+        public async Task<IBasicUserInformation> GetBasicUserInformation(string requestingUserId, string userId)
         {
             if (requestingUserId != userId)
             {
@@ -154,10 +154,24 @@ namespace LessPaper.Guard.Database.MongoDb.Models
             if (userInformationDto == null)
             {
                 throw new ObjectNotResolvableException(
-                    $"User {userId} could not be found by user {requestingUserId} during user information request");
+                    $"User {userId} could not be found by user {requestingUserId} during get basic user information request");
             }
             
             return new MinimalUserInformation(userInformationDto);
+        }
+
+        /// <inheritdoc />
+        public async Task<IExtendedUserInformation> GetUserInformation(string email)
+        {
+            var userInformationDto = await userCollection.Find(user => user.Email == email).FirstOrDefaultAsync();
+
+            if (userInformationDto == null)
+            {
+                throw new ObjectNotResolvableException(
+                    $"User with email address {email} could not be found during get user information request");
+            }
+
+            return new ExtendedUserInformation(userInformationDto);
         }
     }
 }

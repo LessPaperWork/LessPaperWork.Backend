@@ -3,7 +3,7 @@ using LessPaper.Shared.Interfaces.General;
 
 namespace LessPaper.Guard.Database.MongoDb.Models.Implement
 {
-    public class MinimalUserInformation : IMinimalUserInformation
+    public class MinimalUserInformation : IBasicUserInformation
     {
         private readonly UserDto dto;
 
@@ -13,18 +13,13 @@ namespace LessPaper.Guard.Database.MongoDb.Models.Implement
         }
 
         /// <inheritdoc />
+        public string UserId => dto.Id;
+
+        /// <inheritdoc />
         public string Email => dto.Email;
 
         /// <inheritdoc />
-        public string PasswordHash => dto.PasswordHash;
+        public string PublicKey => dto.PublicKey;
 
-        /// <inheritdoc />
-        public string Salt => dto.Salt;
-
-        /// <inheritdoc />
-        public string RootDirectoryId => dto.RootDirectory;
-
-        /// <inheritdoc />
-        public string EncryptedPrivateKey => dto.EncryptedPrivateKey;
     }
 }

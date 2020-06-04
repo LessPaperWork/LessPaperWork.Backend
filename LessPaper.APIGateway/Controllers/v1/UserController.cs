@@ -85,7 +85,7 @@ namespace LessPaper.APIGateway.Controllers.v1
             try
             {
                 // Receive user data
-                var userData = await guardApi.GetUserCredentials(loginRequest.Email);
+                var userData = await guardApi.GetUserInformation(loginRequest.Email);
                 if (userData == null)
                     return BadRequest();
 

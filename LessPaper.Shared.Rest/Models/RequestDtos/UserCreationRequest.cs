@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LessPaper.GuardService.Models.Api
 {
-    public class UserCreationRequest : IdRequest
+    public class UserCreationDto 
     {
         [Required]
         [JsonPropertyName("email")]
@@ -30,8 +30,7 @@ namespace LessPaper.GuardService.Models.Api
         [JsonPropertyName("public_key")]
         [ModelBinder(Name = "public_key")]
         public string PublicKey { get; set; }
-
-
+        
         [Required]
         [JsonPropertyName("encrypted_private_key")]
         [ModelBinder(Name = "encrypted_private_key")]

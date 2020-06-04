@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using LessPaper.Shared.Enums;
@@ -17,17 +18,29 @@ namespace LessPaper.Shared.Interfaces.GuardApi
         /// <param name="passwordHash"></param>
         /// <param name="salt"></param>
         /// <param name="userId"></param>
+        /// <param name="publicKey"></param>
+        /// <param name="encryptedPrivateKey"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
-        Task<bool> RegisterNewUser(string email, string passwordHash, string salt, string userId);
-
+        Task<bool> RegisterNewUser(string email, string passwordHash, string salt, string userId, string publicKey, string encryptedPrivateKey);
+        
         /// <summary>
         /// Get user credentials for comparison with given data.
         /// </summary>
         /// <param name="email">E-Mail address</param>
         /// <returns>Necessary credentials or null if user does not exist</returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
-        Task<IMinimalUserInformation> GetUserCredentials(string email);
+        Task<IExtendedUserInformation> GetUserInformation(string email);
+
+
+        /// <summary>
+        /// Get user credentials for comparison with given data.
+        /// </summary>
+        /// <param name="requestingUserId">Id of the requesting user</param>
+        /// <param name="userId">Target user</param>
+        /// <returns>Basic user Information</returns>
+        /// <exception cref="InvalidOperationException">Throws if service not available</exception>
+        Task<IExtendedUserInformation> GetBasicUserInformation(string requestingUserId, string userId);
 
         /// <summary>
         /// Get permissions of an array of files/directories
@@ -45,19 +58,18 @@ namespace LessPaper.Shared.Interfaces.GuardApi
         /// <param name="requestingUserId">Id of the requesting user</param>
         /// <param name="parentDirectoryId">Parent directory id i.e. the root directory</param>
         /// <param name="directoryName">New directory name</param>
-        /// <param name="newDirectoryId">Unique id of the directory</param>
-        /// <returns></returns>
+        /// <returns>New directory id</returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
-        Task<bool> AddDirectory(string requestingUserId, string parentDirectoryId, string directoryName, string newDirectoryId);
+        Task<string> AddDirectory(string requestingUserId, string parentDirectoryId, string directoryName);
 
         /// <summary>
-        /// Deletes an file or an directory
+        /// Deletes an file, directory or an user account
         /// </summary>
         /// <param name="requestingUserId">Id of the requesting user</param>
         /// <param name="objectId">File or directory id</param>
-        /// <returns></returns>
+        /// <returns>Revision ids/blob ids</returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
-        Task<bool> DeleteObject(string requestingUserId, string objectId);
+        Task<string[]> DeleteObject(string requestingUserId, string objectId);
 
         /// <summary>
         /// Add a new file to a directory
@@ -79,31 +91,41 @@ namespace LessPaper.Shared.Interfaces.GuardApi
             string fileId,
             string blobId,
             string fileName,
-            int fileSize, 
-            string encryptedKey, 
+            int fileSize,
+            Dictionary<string, string> encryptedKey,
             DocumentLanguage documentLanguage, 
             ExtensionType fileExtension);
 
         /// <summary>
-        /// Update the metadata of an object i.e. the directory name
+        /// Move object to another directory
         /// </summary>
         /// <param name="requestingUserId">Id of the requesting user</param>
-        /// <param name="objectId">ObjectID of the Object where the metadata should be updated</param>
-        /// <param name="updatedMetadata">New metadata</param>
+        /// <param name="objectId">Object to move</param>
+        /// <param name="newParentDirectoryId">New parent directory id</param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
-        Task<bool> UpdateObjectMetadata(string requestingUserId, string objectId, IMetadataUpdate updatedMetadata);
+        Task<bool> MoveObject(string requestingUserId, string objectId, string newParentDirectoryId);
+
+        /// <summary>
+        /// Rename a file or a directory
+        /// </summary>
+        /// <param name="requestingUserId">Id of the requesting user</param>
+        /// <param name="objectId">Object to rename</param>
+        /// <param name="newName">New name</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">Throws if service not available</exception>
+        Task<bool> RenameObject(string requestingUserId, string objectId, string newName);
 
         /// <summary>
         /// Retrieve metadata of an object
         /// </summary>
         /// <param name="requestingUserId">Id of the requesting user</param>
         /// <param name="objectId">Directory or file id</param>
-        /// <param name="revisionNumber">Version number. Newest file when not set</param>
+        /// <param name="revisionId">Version number. Newest file when not set</param>
         /// <returns>Returns metadata of directory or file</returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
         /// <exception cref="FileNotFoundException"></exception>
-        Task<IMetadata> GetMetadata(string requestingUserId, string objectId, uint? revisionNumber);
+        Task<IMetadata> GetMetadata(string requestingUserId, string objectId, string revisionId);
 
         /// <summary>
         /// Search for files and directories

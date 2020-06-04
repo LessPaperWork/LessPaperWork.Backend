@@ -4,13 +4,8 @@ using System.Text;
 
 namespace LessPaper.Shared.Interfaces.General
 {
-    public interface IMinimalUserInformation
+    public interface IExtendedUserInformation : IBasicUserInformation
     {
-        /// <summary>
-        /// Email Address
-        /// </summary>
-        string Email { get; }
-
         /// <summary>
         /// Hashed version of the password + salt
         /// </summary>

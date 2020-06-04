@@ -25,10 +25,9 @@ namespace LessPaper.Shared.Interfaces.Database.Manager
         /// </summary>
         /// <param name="requestingUserId">Id of the requesting user</param>
         /// <param name="objectId">Directory or file id</param>
-        /// <param name="revisionNumber">Version number. Newest file when not set</param>
         /// <returns>Returns metadata of directory or file</returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
         /// <exception cref="FileNotFoundException"></exception>
-        Task<IDirectoryMetadata> GetDirectoryMetadata(string requestingUserId, string objectId, uint? revisionNumber);
+        Task<IDirectoryMetadata> GetDirectoryMetadata(string requestingUserId, string objectId);
     }
 }

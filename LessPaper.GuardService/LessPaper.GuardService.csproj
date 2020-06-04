@@ -10,11 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LessPaper.Guard.Database.MongoDb\LessPaper.Guard.Database.MongoDb.csproj" />
+    <ProjectReference Include="..\LessPaper.Shared.Rest\LessPaper.Shared.Rest.csproj" />
     <ProjectReference Include="..\LessPaper.Shared\LessPaper.Shared.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\Dtos\Response\" />
   </ItemGroup>
 
 

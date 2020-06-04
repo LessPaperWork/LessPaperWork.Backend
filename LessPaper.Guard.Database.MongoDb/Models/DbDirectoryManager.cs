@@ -277,7 +277,7 @@ namespace LessPaper.Guard.Database.MongoDb.Models
         }
 
         /// <inheritdoc />
-        public async Task<IDirectoryMetadata> GetDirectoryMetadata(string requestingUserId, string directoryId, uint? revisionNumber)
+        public async Task<IDirectoryMetadata> GetDirectoryMetadata(string requestingUserId, string directoryId)
         {
             try
             {
