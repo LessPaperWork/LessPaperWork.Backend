@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LessPaper.Guard.Database.MongoDb\LessPaper.Guard.Database.MongoDb.csproj" />
+    <ProjectReference Include="..\LessPaper.Shared\LessPaper.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

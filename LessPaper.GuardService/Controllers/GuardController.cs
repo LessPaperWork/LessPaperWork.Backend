@@ -42,47 +42,29 @@ namespace LessPaper.GuardService.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RegisterNewUser(UserCreationRequest request)
         {
-            if (!IdGenerator.IsType(request.UserId, IdType.User))
+            if (!IdGenerator.IsType(request.UserId, IdType.User) ||
+                !ValidationHelper.IsValidEmailAddress(request.Email) ||
+                string.IsNullOrWhiteSpace(request.HashedPassword) ||
+                string.IsNullOrWhiteSpace(request.Salt) ||
+                string.IsNullOrWhiteSpace(request.EncryptedPrivateKey) ||
+                string.IsNullOrWhiteSpace(request.EncryptedPrivateKey))
+            {
                 return BadRequest();
-            
+            }
             
             var rootDirectoryId = IdGenerator.NewId(IdType.Directory);
 
-            try
-            {
-                var successful = await userManager.InsertUser(
-                    request.UserId,
-                    rootDirectoryId,
-                    request.Email,
-                    request.HashedPassword,
-                    request.Salt,
-                    request.PublicKey,
-                    request.EncryptedPrivateKey);
-                
-                if (!successful)
-                    return BadRequest();
-            }
-            catch (InvalidParameterException)
-            {
-                throw;
-            }
-            catch (ObjectNotResolvableException)
-            {
-                throw;
-            }
-            catch (UnexpectedBehaviourException)
-            {
-                throw;
-            }
-            catch (DatabaseException e)
-            {
-                throw new DatabaseException("Database error during file delete. See inner exception.", e);
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Unknown error during file delete. See inner exception.", e);
-            }
+            var successful = await userManager.InsertUser(
+                request.UserId,
+                rootDirectoryId,
+                request.Email,
+                request.HashedPassword,
+                request.Salt,
+                request.PublicKey,
+                request.EncryptedPrivateKey);
 
+            if (!successful)
+                return BadRequest();
 
 
             return Ok();

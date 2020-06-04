@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using LessPaper.APIGateway.Helper;
+using LessPaper.Shared.Helper;
 using Xunit;
 
 namespace LessPaper.APIGateway.UnitTest.Helper

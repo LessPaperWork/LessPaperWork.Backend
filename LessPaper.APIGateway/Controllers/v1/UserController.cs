@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using LessPaper.APIGateway.Helper;
 using LessPaper.APIGateway.Models;
 using LessPaper.APIGateway.Models.Request;
 using LessPaper.APIGateway.Options;

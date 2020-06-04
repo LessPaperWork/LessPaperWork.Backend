@@ -27,7 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LessPaper.Shared.MinIO\LessPaper.Shared.MinIO.csproj" />
-    <ProjectReference Include="..\LessPaper.Shared\LessPaper.Shared.csproj" />
   </ItemGroup>
 
 </Project>
