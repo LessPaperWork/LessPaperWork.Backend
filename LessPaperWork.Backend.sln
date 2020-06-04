@@ -47,6 +47,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LessPaper.Shared.Queueing.I
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LessPaper.Shared.Queueing.UnitTest", "LessPaper.Shared.Queueing.UnitTest\LessPaper.Shared.Queueing.UnitTest.csproj", "{6D15FDC7-F1D3-4559-85BD-5A96DF16E0DC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{397851A5-09FC-46EA-B5F3-ADADCB9144C0}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
