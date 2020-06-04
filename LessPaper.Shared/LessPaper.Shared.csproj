@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.0.11</Version>
+    <RepositoryUrl>https://github.com/ChristianHellwig/LessPaper.Shared</RepositoryUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <LangVersion>8</LangVersion>
+    <Company>LessPaper</Company>
+    <Authors>LessPaper</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Interfaces\GuardApi\Request\**" />
+    <EmbeddedResource Remove="Interfaces\GuardApi\Request\**" />
+    <None Remove="Interfaces\GuardApi\Request\**" />
+  </ItemGroup>
+
+</Project>

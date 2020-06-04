@@ -1,0 +1,52 @@
+## Exclude all files
+*
+!/**/
+
+
+## Exlcude binary directories
+/**/Debug
+/**/Release
+
+
+## Git
+!.gitignore
+!/**/*.gitkeep
+
+
+## Basic repository and documentation files
+!LICENSE
+!/**/*.md
+
+
+## General project/solution/code files
+!/**/*.sln
+!/**/*.csproj
+!/**/*.cs
+
+
+## Third party settings
+### Github actions
+!.github/workflows/*.yml
+
+### Resharper
+!/**/*.DotSettings
+
+### Docker
+!/**/*.Dockerfile
+
+
+## Specific project files
+### LessPaper.APIGateway
+!LessPaper.APIGateway/Properties/launchSettings.json
+!LessPaper.APIGateway/appsettings.Development.json
+!LessPaper.APIGateway/appsettings.json
+
+### LessPaper.WriteService
+!LessPaper.WriteService/Properties/launchSettings.json
+!LessPaper.WriteService/appsettings.Development.json
+!LessPaper.WriteService/appsettings.json
+
+### LessPaper.Shared.MinIO
+!LessPaper.Shared.MinIO.IntegrationTest/TestCertificates/private.key
+!LessPaper.Shared.MinIO.IntegrationTest/TestCertificates/public.crt
+
