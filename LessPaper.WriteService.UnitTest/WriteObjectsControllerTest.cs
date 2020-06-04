@@ -80,7 +80,7 @@ namespace LessPaper.WriteService.UnitTest
                 It.IsAny<DocumentLanguage>(),
                 It.IsAny<ExtensionType>())).ReturnsAsync(4);
 
-            var bucketMock = new Mock<IWriteableBucket>();
+            var bucketMock = new Mock<IWritableBucket>();
             bucketMock.Setup(x => x.UploadFileEncrypted(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
