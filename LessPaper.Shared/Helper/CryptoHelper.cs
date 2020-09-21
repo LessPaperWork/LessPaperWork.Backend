@@ -2,6 +2,7 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace LessPaper.Shared.Helper
@@ -29,7 +30,7 @@ namespace LessPaper.Shared.Helper
         /// </summary>
         /// <param name="byteCount">Number of bytes</param>
         /// <returns>Salt</returns>
-        public static string GetSalt(uint byteCount = 10)
+        public static string GetRandomString(uint byteCount = 10)
         {
             var byteArray = new byte[byteCount];
             SecureRandomProvider.GetBytes(byteArray);
@@ -47,7 +48,7 @@ namespace LessPaper.Shared.Helper
 
             public string PublicKey { get; }
 
-            public string PrivateKey { get;  }
+            public string PrivateKey { get; }
         }
 
         public static RsaKeyPair GenerateRsaKeyPair(int keySize = 2048)
@@ -91,26 +92,43 @@ namespace LessPaper.Shared.Helper
         }
 
 
-        public static string AesEncrypt(string key, string iv, string plainText)
+        public static async Task<string> AesEncrypt(string key, string iv, string plainText)
         {
-            // with the specified key and IV. 
-            using (RijndaelManaged rijAlg = new RijndaelManaged())
+            using var rijAlg = new RijndaelManaged
             {
-                rijAlg.GenerateIV();
-                rijAlg.GenerateKey();
+                Key = Encoding.UTF8.GetBytes(key),
+                IV = Encoding.UTF8.GetBytes(iv)
+            };
 
-                ICryptoTransform encryptor = rijAlg.CreateEncryptor(rijAlg.Key, rijAlg.IV);
-                
-                using MemoryStream msEncrypt = new MemoryStream();
-                using CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write);
-                using StreamWriter swEncrypt = new StreamWriter(csEncrypt);
-               
-                swEncrypt.Write(plainText);
+            var encryptor = rijAlg.CreateEncryptor(rijAlg.Key, rijAlg.IV);
 
-                return Convert.ToBase64String(msEncrypt.ToArray());
-            }
+            using var msEncrypt = new MemoryStream();
+            using var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write);
+            using var swEncrypt = new StreamWriter(csEncrypt);
+
+            await swEncrypt.WriteAsync(plainText);
+
+            return Convert.ToBase64String(msEncrypt.ToArray());
         }
 
 
+        public static async Task<string> AesDecrypt(string key, string iv, string encryptedData)
+        {
+            using var rijAlg = new RijndaelManaged
+            {
+                Key = Encoding.UTF8.GetBytes(key),
+                IV = Encoding.UTF8.GetBytes(iv)
+            };
+
+            var decryptor = rijAlg.CreateDecryptor(rijAlg.Key, rijAlg.IV);
+
+            using var msDecrypt = new MemoryStream(Convert.FromBase64String(encryptedData));
+            using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
+            using var swDecrypt = new StreamReader(csDecrypt);
+
+            var plaintext = await swDecrypt.ReadToEndAsync();
+
+            return plaintext;
+        }
     }
 }

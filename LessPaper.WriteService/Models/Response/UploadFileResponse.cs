@@ -8,27 +8,21 @@ namespace LessPaper.WriteService.Models.Response
 {
     public class UploadFileResponse : IUploadMetadata
     {
-        public UploadFileResponse(string objectName, string objectId, uint quickNumber)
+        public UploadFileResponse(string fileId, string revisionId, uint quickNumber)
         {
-            ObjectName = objectName;
-            ObjectId = objectId;
+            FileId = fileId;
+            RevisionId = revisionId;
             QuickNumber = quickNumber;
         }
 
         /// <inheritdoc />
-        [JsonPropertyName("object_name")]
-        public string ObjectName { get; }
-
-        /// <inheritdoc />
-        public Dictionary<string, Permission> Permissions { get;}
-
-        /// <inheritdoc />
-        public string Path { get; }
-
-        /// <inheritdoc />
         [JsonPropertyName("object_id")]
-        public string ObjectId { get; }
-        
+        public string FileId { get; }
+
+        /// <inheritdoc />
+        [JsonPropertyName("revision_id")]
+        public string RevisionId { get; }
+
         /// <inheritdoc />
         [JsonPropertyName("quick_number")]
         public uint QuickNumber { get; }

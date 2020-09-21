@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="TestCertificates\generate_cert.go" />
+    <Compile Remove="TestCertificates\**" />
+    <EmbeddedResource Remove="TestCertificates\**" />
+    <None Remove="TestCertificates\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,10 +29,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="TestCertificates\" />
   </ItemGroup>
 
   <ItemGroup>

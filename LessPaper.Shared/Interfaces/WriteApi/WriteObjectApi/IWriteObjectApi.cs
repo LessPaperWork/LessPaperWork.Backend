@@ -38,10 +38,20 @@ namespace LessPaper.Shared.Interfaces.WriteApi.WriteObjectApi
         /// </summary>
         /// <param name="requestingUserId">Id of the requesting user</param>
         /// <param name="objectId">Object ID</param>
-        /// <param name="metadataUpdate"></param>
+        /// <param name="newName">New name of the object</param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
-        Task<bool> UpdateMetadata(string requestingUserId, string objectId, IMetadataUpdate metadataUpdate);
+        Task<bool> RenameObject(string requestingUserId, string objectId, string newName);
+        
+        /// <summary>
+        /// Update Metadata of file or directory 
+        /// </summary>
+        /// <param name="requestingUserId">Id of the requesting user</param>
+        /// <param name="objectId">Object ID</param>
+        /// <param name="newParentDirectoryId">Id of the parent directory</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">Throws if service not available</exception>
+        Task<bool> MoveObject(string requestingUserId, string objectId, string newParentDirectoryId);
 
         /// <summary>
         /// Flags Object as deleted

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LessPaper.Shared.Interfaces.Bucket;
 using LessPaper.Shared.MinIO.Interfaces;
+using LessPaper.Shared.Models.Exceptions.Bucket;
 using Minio;
 using Minio.DataModel;
 
@@ -24,18 +25,18 @@ namespace LessPaper.Shared.MinIO.Models
         {
         }
 
-    
-        public async Task<bool> UploadFileEncrypted(string bucketName, string fileId, int fileSize, byte[] plaintextIvAndKey, Stream fileStream)
+
+        public async Task UploadEncrypted(string bucketName, string fileId, int fileSize, byte[] plaintextIvAndKey, Stream fileStream)
         {
             if (plaintextIvAndKey.Length != 16 + 32)
-                return false;
+                throw new InvalidKeyException($"Invalid key length. Length of key was { plaintextIvAndKey.Length } bytes but must equal {16 + 32}");
 
             var iv = plaintextIvAndKey.Take(16).ToArray();
             var key = plaintextIvAndKey.Skip(16).ToArray();
 
             using var aes = Aes.Create();
             if (aes == null)
-                return false;
+                throw new CryptoException("Unable to create aes instance");
 
             aes.KeySize = 256;
             using var encryptor = aes.CreateEncryptor(key, iv);
@@ -43,47 +44,33 @@ namespace LessPaper.Shared.MinIO.Models
 
             // ReSharper disable once RedundantCast
             var encryptedFileSize = (int)((fileSize / 16 + 1) * 16);
+            await Upload(bucketName, fileId, encryptedFileSize, cryptoStream);
 
-            return await UploadFile(bucketName, fileId, encryptedFileSize, cryptoStream);
         }
 
-        public async Task<bool> UploadFile(string bucketName, string fileId, int fileSize, Stream fileStream)
+        public async Task Upload(string bucketName, string fileId, int fileSize, Stream fileStream)
         {
-            try
-            {
+            await MinioClient.PutObjectAsync(
+                bucketName,
+                fileId,
+                fileStream,
+                fileSize,
+                "application/octet-stream",
+                null);
 
-                await MinioClient.PutObjectAsync(
-                    bucketName,
-                    fileId,
-                    fileStream,
-                    fileSize,
-                    "application/octet-stream",
-                    null);
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                throw;
-                Console.WriteLine(e);
-                return false;
-            }
         }
 
-        public async Task<bool> DeleteFile(string bucketName, string fileId)
+        public async Task Delete(string bucketName, string fileId)
         {
-            try
-            {
 
-                await MinioClient.RemoveObjectAsync(bucketName, fileId);
-                return true;
-            }
-            catch (Exception e)
-            {
-                throw;
-                Console.WriteLine(e);
-                return false;
-            }
+            await MinioClient.RemoveObjectAsync(bucketName, fileId);
+
+        }
+
+        /// <inheritdoc />
+        public async Task Delete(string bucketName, string[] ids)
+        {
+            await MinioClient.RemoveObjectAsync(bucketName, ids);
         }
     }
 }

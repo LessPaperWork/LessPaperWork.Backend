@@ -49,16 +49,21 @@ namespace LessPaper.APIGateway.Controllers.v1
 
             // Generate user entry
             var emailAddress = registrationRequest.Email;
-            var salt = CryptoHelper.GetSalt(10);
+            var salt = CryptoHelper.GetRandomString(10);
             var hashedPassword = CryptoHelper.Sha256FromString(registrationRequest.Password, salt);
 
+            var keyPair = CryptoHelper.GenerateRsaKeyPair();
+            var iv = CryptoHelper.GetRandomString(16);
+            var encryptedPrivateKey = await CryptoHelper.AesEncrypt(registrationRequest.Password, iv, keyPair.PrivateKey);
+            
+
             //TODO Add user type
-            var userId = IdGenerator.NewId(IdType.Undefined);
+            var userId = IdGenerator.NewId(IdType.User);
 
             // Call api to register a new user
             try
             {
-                var registrationSuccessful = await guardApi.RegisterNewUser(emailAddress, hashedPassword, salt, userId);
+                var registrationSuccessful = await guardApi.RegisterNewUser(emailAddress, hashedPassword, salt, userId, keyPair.PublicKey, encryptedPrivateKey);
                 if (!registrationSuccessful)
                     return BadRequest();
             }

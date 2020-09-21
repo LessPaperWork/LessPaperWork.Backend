@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using LessPaper.APIGateway.Models.Request;
 using LessPaper.APIGateway.Models.Response;
 using LessPaper.APIGateway.Options;
+using LessPaper.Shared.Enums;
+using LessPaper.Shared.Helper;
 using LessPaper.Shared.Interfaces.General;
 using LessPaper.Shared.Interfaces.ReadApi;
 using LessPaper.Shared.Interfaces.WriteApi;
@@ -27,7 +30,15 @@ namespace LessPaper.APIGateway.Controllers.v1
             this.readApi = readApi;
         }
 
-        
+        protected string GetUserId()
+        {
+            var userId = User.Claims.First(i => i.Type == "UserId").Value;
+            if (IdGenerator.IsType(userId, IdType.User))
+                throw new Exception("Invalid user id");
+
+            return userId;
+        }
+
         /// <summary>
         /// Upload a file to a specific location
         /// </summary>
@@ -39,19 +50,22 @@ namespace LessPaper.APIGateway.Controllers.v1
         [HttpPost("{directoryId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UploadFileToKnownLocation(
+        public async Task<IActionResult> UploadFile(
             [FromForm] UploadFileRequest fileData,
             [FromRoute] string directoryId,
             [FromQuery(Name = "revisionNr")] uint? revisionNumber)
         {
+            var requestingUserId = GetUserId();
+
             try
             {
                 var uploadMetadata = await writeApi.ObjectApi.UploadFile(
+                    requestingUserId,
                     directoryId,
                     fileData.File.OpenReadStream(),
                     fileData.PlaintextKey,
                     fileData.EncryptedKey,
-                    fileData.DocumentLanguage, 
+                    fileData.DocumentLanguage,
                     fileData.FileExtension);
 
                 var responseObject = new UploadFileResponse(uploadMetadata);
@@ -73,9 +87,12 @@ namespace LessPaper.APIGateway.Controllers.v1
             [FromBody] CreateDirectoryRequest createDirectoryRequest
         )
         {
+            var requestingUserId = GetUserId();
+
             try
             {
                 var createDirectoryMetadata = await writeApi.ObjectApi.CreateDirectory(
+                        requestingUserId,
                         directoryId,
                         createDirectoryRequest.SubDirectoryName);
 
@@ -102,9 +119,12 @@ namespace LessPaper.APIGateway.Controllers.v1
             [FromRoute] string objectId,
             [FromQuery(Name = "revisionNr")] uint? revisionNumber)
         {
+            var requestingUserId = GetUserId();
+
             try
             {
-                var stream = await readApi.ObjectApi.GetObject(objectId, revisionNumber);
+                var stream = await readApi.ObjectApi.GetObject(requestingUserId, objectId, revisionNumber);
+
 
                 if (stream == null)
                     return BadRequest();
@@ -131,9 +151,10 @@ namespace LessPaper.APIGateway.Controllers.v1
             [FromRoute] string objectId,
             [FromQuery(Name = "revisionNr")] uint? revisionNumber)
         {
+            var requestingUserId = GetUserId();
             try
             {
-                var metadata = await readApi.ObjectApi.GetMetadata(objectId, revisionNumber);
+                var metadata = await readApi.ObjectApi.GetMetadata(requestingUserId, objectId, revisionNumber);
                 return metadata switch
                 {
                     IFileMetadata fileMetadata => (IActionResult)Ok(new FileMetadataResponse(fileMetadata)),
@@ -148,36 +169,64 @@ namespace LessPaper.APIGateway.Controllers.v1
             }
         }
 
+
+
         /// <summary>
-        /// Update the metadata of a file or a directory
+        /// Rename a file or a directory
         /// </summary>
-        /// <param name="updatedMetadata">Updated metadata</param>
-        /// <param name="objectId">File or directory id</param>
-        /// <param name="revisionNumber">Revision number of the file. Null for directories or if the latest version is meant</param>
         /// <returns></returns>
-        [HttpPatch("{objectId}")]
+        [HttpPost("{objectId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateObjectMetadata(
-            [FromBody] UpdateFileMetaDataRequest updatedMetadata,
-            [FromRoute] string objectId,
-            [FromQuery(Name = "revisionNr")] uint? revisionNumber)
+        public async Task<IActionResult> RenameObject(
+            [FromQuery] string requestingUserId,
+            [FromQuery] string objectId,
+            [FromQuery] string newName)
         {
             try
             {
-                var updated = await writeApi.ObjectApi.UpdateMetadata(objectId, updatedMetadata);
-                if (updated)
-                    return Ok();
+                var successful = await writeApi.ObjectApi.RenameObject(requestingUserId, objectId, newName);
+
+                if (!successful)
+                    return BadRequest();
+
+                return Ok();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 return BadRequest();
             }
-
-            return BadRequest();
         }
 
+        /// <summary>
+        /// Move a file or a directory
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("{objectId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MoveObject(
+            [FromQuery] string requestingUserId,
+            [FromRoute] string objectId,
+            [FromRoute] string newParentDirectoryId)
+        {
+            try
+            {
+                var successful = await writeApi.ObjectApi.MoveObject(requestingUserId, objectId, newParentDirectoryId);
+
+                if (!successful)
+                    return BadRequest();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest();
+            }
+        }
+        
         /// <summary>
         /// Delete a file or a directory
         /// </summary>
@@ -191,9 +240,11 @@ namespace LessPaper.APIGateway.Controllers.v1
             [FromRoute] string objectId,
             [FromQuery(Name = "revisionNr")] uint? revisionNumber)
         {
+            var requestingUserId = GetUserId();
+
             try
             {
-                var deleted = await writeApi.ObjectApi.DeleteObject(objectId);
+                var deleted = await writeApi.ObjectApi.DeleteObject(requestingUserId, objectId);
                 if (deleted)
                     return Ok();
             }
@@ -224,9 +275,11 @@ namespace LessPaper.APIGateway.Controllers.v1
             [FromQuery(Name = "count")] uint? count,
             [FromQuery(Name = "page")] uint? page)
         {
+            var requestingUserId = GetUserId();
+
             try
             {
-                var searchResults = await readApi.ObjectApi.Search(directoryId, searchQuery, count ?? 10, page ?? 0);
+                var searchResults = await readApi.ObjectApi.Search(requestingUserId, directoryId, searchQuery, count ?? 10, page ?? 0);
                 return Ok(new SearchResponse(searchResults));
             }
             catch (Exception e)

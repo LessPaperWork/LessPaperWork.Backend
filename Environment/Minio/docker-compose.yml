@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  minio:
+    image: minio/minio:latest
+    volumes:
+      - ./TestCertificates:/root/.minio/certs
+    ports:
+      - "9000:9000"
+    environment:
+      MINT_MODE: full
+      SERVER_ENDPOINT: 127.0.01:9000
+      ACCESS_KEY: minioadmin
+      SECRET_KEY: minioadmin
+      ENABLE_HTTPS: 1
+      MINIO_ACCESS_KEY: accesskey
+      MINIO_SECRET_KEY: masterkey
+      MINIO_BUCKET: minio/lesspaper
+      SSL_CERT_FILE: /root/.minio/certs/public.crt
+    command: server https:/127.0.0.1:9000/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio_mc:
+    image: minio_mc
+    build: ./Minio_mc/
+    command: sh /root/endpoint.sh
+    environment:
+      MINIO_MC_SLEEP_SEC: 10
+      MINIO_ACCESS_KEY: accesskey
+      MINIO_SECRET_KEY: masterkey
+    volumes: 
+      - ./TestCertificates:/root/TestCertificates
+      - ./Minio_mc/endpoint.sh:/root/endpoint.sh
+    depends_on:
+      - minio

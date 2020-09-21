@@ -13,7 +13,7 @@ namespace LessPaper.Shared.Interfaces.Bucket
         /// <param name="fileSize">File size in bytes</param>
         /// <param name="fileStream">Write-File-Stream</param>
         /// <returns>True if successful</returns>
-        Task<bool> DownloadFile(string bucketName, string fileId, int fileSize, Stream fileStream);
+        Task Download(string bucketName, string fileId, int fileSize, Stream fileStream);
         
         /// <summary>
         /// Download file from bucket and decrypt
@@ -24,6 +24,6 @@ namespace LessPaper.Shared.Interfaces.Bucket
         /// <param name="plaintextKey">Plaintext decryption key</param>
         /// <param name="fileStream">Write-File-Stream</param>
         /// <returns>True if successful</returns>
-        Task<bool> DownloadFileDecrypted(string bucketName, string fileId, int fileSize, byte[] plaintextKey, Stream fileStream);
+        Task DownloadDecrypted(string bucketName, string fileId, int fileSize, byte[] plaintextKey, Stream fileStream);
     }
 }

@@ -13,27 +13,19 @@ namespace LessPaper.APIGateway.Models.Response
     {
         public UploadFileResponse(IUploadMetadata uploadMetadata)
         {
-            ObjectName = uploadMetadata.ObjectName;
-            ObjectId = uploadMetadata.ObjectId;
             QuickNumber = uploadMetadata.QuickNumber;
+            FileId = uploadMetadata.FileId;
+            RevisionId = uploadMetadata.RevisionId;
         }
-
-        /// <inheritdoc />
-        [JsonPropertyName("object_name")]
-        public string ObjectName { get; }
-
-        /// <inheritdoc />
-        public Dictionary<string, Permission> Permissions { get; set; }
-
-        /// <inheritdoc />
-        public string Path { get; set; }
-
-        /// <inheritdoc />
-        [JsonPropertyName("object_id")]
-        public string ObjectId { get; }
-
+        
         /// <inheritdoc />
         [JsonPropertyName("quick_number")]
         public uint QuickNumber { get; }
+
+        /// <inheritdoc />
+        public string FileId { get; set; }
+
+        /// <inheritdoc />
+        public string RevisionId { get; set; }
     }
 }

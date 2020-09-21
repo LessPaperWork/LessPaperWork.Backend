@@ -16,7 +16,7 @@ namespace LessPaper.Shared.UnitTest
             var salts = new HashSet<string>();
             for (var i = 0; i < 50; i++)
             {
-                var salt = CryptoHelper.GetSalt(10);
+                var salt = CryptoHelper.GetRandomString(10);
                 Assert.NotNull(salt);
                 Assert.False(string.IsNullOrWhiteSpace(salt));
                 Assert.DoesNotContain(salt, salts);
@@ -55,7 +55,7 @@ namespace LessPaper.Shared.UnitTest
             var start = DateTime.UtcNow;
             for (int i = 0; i < 100000; i++)
             {
-                var e = CryptoHelper.AesEncrypt("", "", CryptoHelper.GetSalt(16));
+                var e = CryptoHelper.AesEncrypt("", "", CryptoHelper.GetRandomString(16));
             }
             var duration2 = DateTime.UtcNow - start;
 
@@ -63,7 +63,7 @@ namespace LessPaper.Shared.UnitTest
             start = DateTime.UtcNow;
             for (int i = 0; i < 10000; i++)
             {
-                var e = CryptoHelper.RsaEncrypt(kp.PublicKey, CryptoHelper.GetSalt(16));
+                var e = CryptoHelper.RsaEncrypt(kp.PublicKey, CryptoHelper.GetRandomString(16));
             }
 
             var duration1 = DateTime.UtcNow - start;

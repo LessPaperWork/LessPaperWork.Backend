@@ -35,6 +35,26 @@
 !/**/*.Dockerfile
 
 
+## Docker Environments
+### Mongo Cluster
+!Environment/MongoDB/docker-compose.yml
+!Environment/MongoDB/rebuild.sh
+!Environment/MongoDB/mongolocal/rebuild.sh
+!Environment/MongoDB/mongolocal/replset.js
+!Environment/MongoDB/mongolocal/Dockerfile
+!Environment/MongoDB/mongolocal/setup.sh
+
+### Minio Bucket
+!Environment/Minio/docker-compose.yml
+!Environment/Minio/Minio_mc/Dockerfile
+!Environment/Minio/Minio_mc/endpoint.sh
+!Environment/Minio/TestCertificates/private.key
+!Environment/Minio/TestCertificates/public.crt
+
+### RabbitMq
+!Environment/RabbitMq/docker-compose.yml
+
+
 ## Specific project files
 ### LessPaper.APIGateway
 !LessPaper.APIGateway/Properties/launchSettings.json

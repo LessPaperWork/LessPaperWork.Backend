@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using LessPaper.Shared.Interfaces.Bucket;
 using LessPaper.Shared.Interfaces.Queuing;
+using LessPaper.Shared.Rest.Models.RequestDtos;
 using LessPaper.WriteService.Models.Response;
 
 namespace LessPaper.WriteService.Controllers.v1
@@ -24,7 +26,7 @@ namespace LessPaper.WriteService.Controllers.v1
         private readonly IWritableBucket bucket;
         readonly IQueueSender queueSender;
 
-        public WriteObjectsController(IOptions<AppSettings> config,  IGuardApi guardApi, IWritableBucket bucket, IQueueBuilder queueBuilder)
+        public WriteObjectsController(IOptions<AppSettings> config, IGuardApi guardApi, IWritableBucket bucket, IQueueBuilder queueBuilder)
         {
             this.config = config;
             this.guardApi = guardApi;
@@ -32,22 +34,20 @@ namespace LessPaper.WriteService.Controllers.v1
             queueSender = queueBuilder.Start().Result;
         }
 
-
         /// <summary>
         /// Upload a file to a specific location
         /// </summary>
         /// <param name="fileData">Form-data of the file</param>
         /// <param name="directoryId">Target directory id</param>
-        /// <param name="revisionNumber">Revision number of the file. Null if the latest version is meant</param>
+        /// <param name="requestingUserId">Id of the requesting user</param>
         /// <returns></returns>
-        [Route("/files")]
-        [HttpPost("{directoryId}")]
+        [HttpPost("/files/{directoryId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UploadFile(
-            [FromForm] UploadFileRequest fileData,
+            [FromBody] UploadFileDto fileData,
             [FromRoute] string directoryId,
-            [FromQuery(Name = "revisionNr")] uint? revisionNumber)
+            [FromQuery] string requestingUserId)
         {
             #region - Input data validation
 
@@ -58,8 +58,10 @@ namespace LessPaper.WriteService.Controllers.v1
                 fileData.File.Length <= 0 ||
                 fileData.File.Length > int.MaxValue ||
                 fileData.File.Length > config.Value.ValidationRules.MaxFileSizeInBytes ||
-                string.IsNullOrWhiteSpace(fileData.Name) ||
-                string.IsNullOrWhiteSpace(fileData.EncryptedKey) ||
+                string.IsNullOrWhiteSpace(fileData.FileName) ||
+                fileData.EncryptedKey.Count == 0 ||
+                !fileData.EncryptedKey.ContainsKey(requestingUserId) ||
+                fileData.EncryptedKey.Any(x => string.IsNullOrWhiteSpace(x.Key) || string.IsNullOrWhiteSpace(x.Value)) ||
                 string.IsNullOrWhiteSpace(fileData.PlaintextKey))
             {
                 return BadRequest();
@@ -69,35 +71,36 @@ namespace LessPaper.WriteService.Controllers.v1
 
             var plaintextKeyBytes = Convert.FromBase64String(fileData.PlaintextKey);
             // Make sure the iv is 16 Bytes long and the key has exactly 32 Byte. 
-            if (plaintextKeyBytes.Length != 16 +32)
+            if (plaintextKeyBytes.Length != 16 + 32)
                 return BadRequest();
 
             #endregion
 
             var fileId = IdGenerator.NewId(IdType.File);
+            var revisionId = IdGenerator.NewId(IdType.FileBlob);
 
             try
             {
                 // Upload file to bucket
-                var successful = await bucket.UploadFileEncrypted(
+                await bucket.UploadEncrypted(
                     config.Value.ExternalServices.MinioBucketName,
-                    fileId,
+                    revisionId,
                     fileSize,
                     plaintextKeyBytes,
                     fileData.File.OpenReadStream());
-
-                if (!successful)
-                    return BadRequest();
-
+                
                 // Add item to database
                 var quickNumber = await guardApi.AddFile(
-                                                    directoryId, 
-                                                    fileId, 
-                                                    fileSize, 
-                                                    fileData.EncryptedKey, 
+                                                    requestingUserId,
+                                                    directoryId,
+                                                    fileId,
+                                                    revisionId,
+                                                    fileData.FileName,
+                                                    fileSize,
+                                                    fileData.EncryptedKey,
                                                     DocumentLanguage.German,
                                                     ExtensionType.Docx);
-                
+
 
                 // Add item to queue
                 var queueRequest = new QueueFileMetadataDto
@@ -105,39 +108,45 @@ namespace LessPaper.WriteService.Controllers.v1
                     FileId = fileId,
                     DirectoryId = directoryId,
                     DocumentLanguage = fileData.DocumentLanguage,
-                    EncryptedKey = fileData.EncryptedKey,
-                    FileName = fileData.Name,
+                    FileName = fileData.FileName,
                     PlaintextKey = fileData.PlaintextKey
                 };
                 await queueSender.Send(queueRequest);
-                
+
 
                 // Build response 
                 // TODO Remove casts and add uint return values in sub-apis
                 var response = new UploadFileResponse(
-                    queueRequest.FileName,
-                    fileId, 
-                    (uint)fileSize, 
-                    DateTime.UtcNow,
-                    DateTime.MinValue,
+                    fileId,
+                    revisionId,
                     (uint)quickNumber);
 
                 return Ok(response);
             }
             catch (Exception e)
             {
-                // TODO Remove file if something failed
+                // TODO Remove file if database failed
+                // TODO Write queue data to database if queue fails
+
                 Console.Write(e);
                 return BadRequest();
             }
         }
 
-        [Route("/directories")]
-        [HttpPost("{directoryId}")]
+
+        /// <summary>
+        /// Create a new directory in a given location
+        /// </summary>
+        /// <param name="directoryId">Directory id</param>
+        /// <param name="createDirectoryRequest"></param>
+        /// <param name="requestingUserId"></param>
+        /// <returns></returns>
+        [HttpPost("/directories/{directoryId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateDirectory(
             [FromRoute] string directoryId,
+            [FromQuery] string requestingUserId,
             [FromBody] CreateDirectoryRequest createDirectoryRequest
         )
         {
@@ -154,10 +163,12 @@ namespace LessPaper.WriteService.Controllers.v1
 
             try
             {
-                var newDirectoryId = IdGenerator.NewId(IdType.Directory);
-                var successful = await guardApi.AddDirectory(directoryId, createDirectoryRequest.SubDirectoryName, newDirectoryId);
+                var newDirectoryId = await guardApi.AddDirectory(
+                    requestingUserId,
+                    directoryId,
+                    createDirectoryRequest.SubDirectoryName);
 
-                if (!successful)
+                if (!IdGenerator.IsType(newDirectoryId, IdType.Directory))
                     return BadRequest();
 
                 return Ok(newDirectoryId);
@@ -171,46 +182,74 @@ namespace LessPaper.WriteService.Controllers.v1
 
 
         /// <summary>
-        /// Update the metadata of a file or a directory
+        /// Rename a file or a directory
         /// </summary>
-        /// <param name="updatedMetadata">Updated metadata</param>
-        /// <param name="objectId">File or directory id</param>
-        /// <param name="revisionNumber">Revision number of the file. Null for directories or if the latest version is meant</param>
         /// <returns></returns>
-        [HttpPatch("{objectId}")]
+        [HttpPost("{objectId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateObjectMetadata(
-            [FromBody] UpdateObjectMetaDataRequest updatedMetadata,
-            [FromRoute] string objectId,
-            [FromQuery(Name = "revisionNr")] uint? revisionNumber)
+        public async Task<IActionResult> RenameObject(
+            [FromQuery]string requestingUserId,
+            [FromQuery] string objectId,
+            [FromQuery] string newName)
         {
             #region - Input data validation -
-            
-            if (!IdGenerator.TypeFromId(objectId, out var typOfId) || (typOfId != IdType.Directory && typOfId != IdType.File))
-                return BadRequest();
 
-            if (string.IsNullOrWhiteSpace(updatedMetadata.ObjectName) ||
-                updatedMetadata.ParentDirectoryIds == null ||
-                updatedMetadata.ParentDirectoryIds.Length == 0)
+            if (!IdGenerator.IsType(requestingUserId, IdType.User) ||
+                !IdGenerator.TypeFromId(objectId, out var typOfId) ||
+                typOfId != IdType.Directory && typOfId != IdType.File ||
+                string.IsNullOrWhiteSpace(newName))
             {
                 return BadRequest();
-            }
-
-            foreach (var updatedMetadataParentDirectoryId in updatedMetadata.ParentDirectoryIds)
-            {
-                // Check that all ids are well formed
-                if (!IdGenerator.TypeFromId(updatedMetadataParentDirectoryId, out var typOfParentDirectoryId) ||
-                    typOfParentDirectoryId != IdType.Directory)
-                    return BadRequest();
             }
 
             #endregion
-            
+
             try
             {
-                var successful = await guardApi.UpdateObjectMetadata(objectId, updatedMetadata);
-     
+                var successful = await guardApi.RenameObject(requestingUserId, objectId, newName);
+
+                if (!successful)
+                    return BadRequest();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest();
+            }
+        }
+
+        /// <summary>
+        /// Move a file or a directory
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("{objectId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MoveObject(
+            [FromQuery] string requestingUserId,
+            [FromRoute] string objectId,
+            [FromRoute] string newParentDirectoryId)
+        {
+            #region - Input data validation -
+
+            if (!IdGenerator.IsType(requestingUserId, IdType.User) ||
+                !IdGenerator.IsType(newParentDirectoryId, IdType.Directory) ||
+                !IdGenerator.TypeFromId(objectId, out var typeOfId) ||
+                (typeOfId != IdType.Directory &&
+                 typeOfId != IdType.File))
+            {
+                return BadRequest();
+            }
+
+            #endregion
+
+            try
+            {
+                var successful = await guardApi.MoveObject(requestingUserId, objectId, newParentDirectoryId);
+
                 if (!successful)
                     return BadRequest();
 
@@ -227,34 +266,35 @@ namespace LessPaper.WriteService.Controllers.v1
         /// Delete a file or a directory
         /// </summary>
         /// <param name="objectId">Id of the File or directory to delete</param>
-        /// <param name="revisionNumber">Revision number of the file. Null for directories or if the latest version is meant</param>
+        /// <param name="requestingUserId">Requesting user id</param>
         /// <returns></returns>
         [HttpDelete("{objectId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> DeleteObject(
-            [FromRoute] string objectId,
-            [FromQuery(Name = "revisionNr")] uint? revisionNumber)
+            [FromQuery] string requestingUserId,
+            [FromRoute] string objectId)
         {
             #region - Input data validation -
 
-            if (!IdGenerator.TypeFromId(objectId, out var typOfId) || 
-                (typOfId != IdType.Directory && typOfId != IdType.File))
+            if (!IdGenerator.IsType(requestingUserId, IdType.User) ||
+                !IdGenerator.TypeFromId(objectId, out var typOfId) ||
+                (typOfId != IdType.Directory && typOfId != IdType.File && typOfId != IdType.FileBlob || typOfId != IdType.User))
                 return BadRequest();
-            
+
             #endregion
-            
+
             try
             {
-                var successful = await guardApi.DeleteObject(objectId);
-
-                if (!successful)
-                    return BadRequest();
-
+                var revisionIds = await guardApi.DeleteObject(requestingUserId, objectId);
+                await bucket.Delete(config.Value.ExternalServices.MinioBucketName, revisionIds);
+                
                 return Ok();
             }
             catch (Exception e)
             {
+                //TODO Remember revision ids and retry delete another time
+
                 Console.WriteLine(e);
                 return BadRequest();
             }

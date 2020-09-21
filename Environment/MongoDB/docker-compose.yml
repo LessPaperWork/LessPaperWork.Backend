@@ -1,0 +1,54 @@
+version: '3'
+services:
+  mongo1:
+    build: ./mongolocal
+    image: mongolocal
+    expose:
+      - 28017
+    ports:
+      - 28017:28017
+    volumes:
+      - ./mongo/instances/1:/data/db
+    command: --port 28017 --bind_ip_all --replSet rs0
+    networks:
+      - mongo_net
+  
+  mongo2:
+    build: ./mongolocal
+    image: mongolocal
+    expose:
+      - 28018
+    ports:
+      - 28018:28018
+    volumes:
+      - ./mongo/instances/2:/data/db
+    command: --port 28018 --bind_ip_all --replSet rs0
+    networks:
+      - mongo_net
+
+  mongo3:
+    build: ./mongolocal
+    image: mongolocal
+    expose:
+      - 28019
+    ports:
+      - 28019:28019
+    volumes:
+      - ./mongo/instances/3:/data/db
+    command: --port 28019 --bind_ip_all --replSet rs0
+    networks:
+      - mongo_net
+
+  replset:
+    build: ./mongolocal
+    command: sh setup.sh
+    depends_on:
+      - mongo1
+    networks:
+      - mongo_net
+
+networks:
+  mongo_net:
+    driver: bridge
+
+  

@@ -29,20 +29,17 @@ namespace LessPaper.Shared.MinIO.IntegrationTest
 
             // Upload file
             await using var uploadMs = new MemoryStream(file);
-            var successfulUpload = await bucket.UploadFile(BucketName, filename, file.Length, uploadMs);
-            Assert.True(successfulUpload);
-
+            await bucket.Upload(BucketName, filename, file.Length, uploadMs);
+            
             // Download file
             await using var downloadMs = new MemoryStream();
-            var successfulDownload = await bucket.DownloadFile(BucketName, filename, file.Length, downloadMs);
-            Assert.True(successfulDownload);
-
+            await bucket.Download(BucketName, filename, file.Length, downloadMs);
+         
             // Compare file
             Assert.Equal(file, downloadMs.ToArray());
 
             // Remove uploaded file
-            var successfulDeleted = await bucket.DeleteFile(BucketName, filename);
-            Assert.True(successfulDeleted);
+            await bucket.Delete(BucketName, filename);
         }
 
         [Fact]
@@ -57,24 +54,21 @@ namespace LessPaper.Shared.MinIO.IntegrationTest
             // Upload file encrypted
             await using var uploadMs = new MemoryStream(file);
             
-            var successfulUpload = await bucket.UploadFileEncrypted(BucketName, filename, file.Length, ivAndKey, uploadMs);
-            Assert.True(successfulUpload);
+            await bucket.UploadEncrypted(BucketName, filename, file.Length, ivAndKey, uploadMs);
+            
 
             // Ensure file is not readable without encryption
             await using var downloadEncryptedBlobMs = new MemoryStream(file.Length);
-            var successfulDownload = await bucket.DownloadFile(BucketName, filename, file.Length, downloadEncryptedBlobMs);
-            Assert.True(successfulDownload);
+            await bucket.Download(BucketName, filename, file.Length, downloadEncryptedBlobMs);
             Assert.NotEqual(file, downloadEncryptedBlobMs.ToArray());
 
             // Download and decrypt file
             await using var downloadMs = new MemoryStream(file.Length);
-            var successfulDecryptedDownload = await bucket.DownloadFileDecrypted(BucketName, filename, file.Length, ivAndKey, downloadMs);
-            Assert.True(successfulDecryptedDownload);
+            await bucket.DownloadDecrypted(BucketName, filename, file.Length, ivAndKey, downloadMs);
             Assert.Equal(file, downloadMs.ToArray());
 
             // Remove uploaded file
-            var successfulDeleted = await bucket.DeleteFile(BucketName, filename);
-            Assert.True(successfulDeleted);
+            await bucket.Delete(BucketName, filename);
         }
     }
 }

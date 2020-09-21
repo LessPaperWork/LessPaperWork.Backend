@@ -11,19 +11,19 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace LessPaper.GuardService.Controllers
+namespace LessPaper.GuardService.Controllers.v1
 {
     [ApiController]
-    [Route("[controller]")]
-    public class GuardController : ControllerBase
+    [Route("v1/[controller]")]
+    public class ObjectsController : ControllerBase
     {
-        private readonly ILogger<GuardController> logger;
+        private readonly ILogger<ObjectsController> logger;
         private readonly IDbUserManager userManager;
         private readonly IDbDirectoryManager directoryManager;
         private readonly IDbFileManager fileManager;
 
-        public GuardController(
-            ILogger<GuardController> logger,
+        public ObjectsController(
+            ILogger<ObjectsController> logger,
             IDbUserManager userManager,
             IDbDirectoryManager directoryManager,
             IDbFileManager fileManager)
@@ -32,53 +32,6 @@ namespace LessPaper.GuardService.Controllers
             this.userManager = userManager;
             this.directoryManager = directoryManager;
             this.fileManager = fileManager;
-        }
-
-        [HttpPost("users")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> RegisterNewUser([FromBody] UserCreationDto request)
-        {
-            if (!IdGenerator.IsType(request.UserId, IdType.User) ||
-                !ValidationHelper.IsValidEmailAddress(request.Email) ||
-                string.IsNullOrWhiteSpace(request.HashedPassword) ||
-                string.IsNullOrWhiteSpace(request.Salt) ||
-                string.IsNullOrWhiteSpace(request.EncryptedPrivateKey) ||
-                string.IsNullOrWhiteSpace(request.PublicKey))
-            {
-                return BadRequest();
-            }
-
-            var rootDirectoryId = IdGenerator.NewId(IdType.Directory);
-
-            var successful = await userManager.InsertUser(
-                request.UserId,
-                rootDirectoryId,
-                request.Email,
-                request.HashedPassword,
-                request.Salt,
-                request.PublicKey,
-                request.EncryptedPrivateKey);
-
-            if (!successful)
-                return BadRequest();
-            
-            return Ok();
-        }
-
-        [HttpGet("users/{email}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetUserInformation([FromRoute] string email)
-        {
-            if (!ValidationHelper.IsValidEmailAddress(email))
-                return BadRequest();
-
-            var userInformation = await userManager.GetUserInformation(email);
-            if (userInformation == null)
-                return BadRequest();
-
-            return new OkObjectResult(new ExtendedUserInformationDto(userInformation));
         }
 
         [HttpGet("permissions/{requestingUserId}")]

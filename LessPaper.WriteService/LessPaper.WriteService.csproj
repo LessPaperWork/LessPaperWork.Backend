@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\LessPaper.Shared.MinIO\LessPaper.Shared.MinIO.csproj" />
     <ProjectReference Include="..\LessPaper.Shared.Queueing\LessPaper.Shared.Queueing.csproj" />
+    <ProjectReference Include="..\LessPaper.Shared.Rest\LessPaper.Shared.Rest.csproj" />
     <ProjectReference Include="..\LessPaper.Shared\LessPaper.Shared.csproj" />
   </ItemGroup>
 

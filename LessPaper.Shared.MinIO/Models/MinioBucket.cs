@@ -19,29 +19,35 @@ namespace LessPaper.Shared.MinIO.Models
             writableBucket = new MinioWriteBucket(MinioClient);
         }
 
-        public async Task<bool> UploadFileEncrypted(string bucketName, string fileId, int fileSize, byte[] plaintextKey, Stream fileStream)
+        public async Task UploadEncrypted(string bucketName, string fileId, int fileSize, byte[] plaintextKey, Stream fileStream)
         {
-            return await writableBucket.UploadFileEncrypted(bucketName, fileId, fileSize, plaintextKey, fileStream);
+            await writableBucket.UploadEncrypted(bucketName, fileId, fileSize, plaintextKey, fileStream);
         }
         
-        public async Task<bool> UploadFile(string bucketName, string fileId, int fileSize, Stream fileStream)
+        public async Task Upload(string bucketName, string fileId, int fileSize, Stream fileStream)
         {
-            return await writableBucket.UploadFile(bucketName, fileId, fileSize, fileStream);
+            await writableBucket.Upload(bucketName, fileId, fileSize, fileStream);
         }
 
-        public async Task<bool> DeleteFile(string bucketName, string fileId)
+        public async Task Delete(string bucketName, string fileId)
         {
-            return await writableBucket.DeleteFile(bucketName, fileId);
+             await writableBucket.Delete(bucketName, fileId);
         }
 
-        public async Task<bool> DownloadFile(string bucketName, string fileId, int fileSize, Stream fileStream)
+        /// <inheritdoc />
+        public async Task Delete(string bucketName, string[] ids)
         {
-            return await readableBucket.DownloadFile(bucketName, fileId, fileSize, fileStream);
+            await writableBucket.Delete(bucketName, ids);
         }
 
-        public async Task<bool> DownloadFileDecrypted(string bucketName, string fileId, int fileSize, byte[] plaintextKey, Stream fileStream)
+        public async Task Download(string bucketName, string fileId, int fileSize, Stream fileStream)
         {
-            return await readableBucket.DownloadFileDecrypted(bucketName, fileId, fileSize, plaintextKey, fileStream);
+            await readableBucket.Download(bucketName, fileId, fileSize, fileStream);
+        }
+
+        public async Task DownloadDecrypted(string bucketName, string fileId, int fileSize, byte[] plaintextKey, Stream fileStream)
+        {
+            await readableBucket.DownloadDecrypted(bucketName, fileId, fileSize, plaintextKey, fileStream);
         }
     }
 }

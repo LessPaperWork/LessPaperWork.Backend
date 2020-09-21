@@ -31,7 +31,7 @@ namespace LessPaper.WriteService
         {
             services.AddOptions();
             services.Configure<AppSettings>(Configuration.GetSection("CustomSettings"));
-            services.AddScoped<IWriteableBucket, MinioBucket>();
+            services.AddScoped<IWritableBucket, MinioBucket>();
             services.AddControllers();
         }
 
