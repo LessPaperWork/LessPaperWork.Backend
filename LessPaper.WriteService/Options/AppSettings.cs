@@ -4,20 +4,13 @@
     {
         public ValidationRules ValidationRules { get; set; }
 
-        public ExternalServices ExternalServices { get; set; }
+        public MinioSettings Minio { get; set; }
+
+        public RabbitMqSettings RabbitMq { get; set; }
+
+        public GuardClientSettings GuardService { get; set; }
     }
 
-    public class ExternalServices
-    {
-        public string MinioServerUrl { get; set; }
-
-        public string MinioServerAccessKey { get; set; }
-
-        public string MinioServerSecretKey { get; set; }
-
-        public string MinioBucketName { get; set; }
-        
-    }
 
     public class ValidationRules
     {

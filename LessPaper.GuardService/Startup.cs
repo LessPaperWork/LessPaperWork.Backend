@@ -1,9 +1,11 @@
+using System.Reflection;
 using LessPaper.Guard.Database.MongoDb.Interfaces;
 using LessPaper.Guard.Database.MongoDb.Models;
 using LessPaper.GuardService.Options;
 using LessPaper.Shared.Interfaces.Database;
 using LessPaper.Shared.Interfaces.Database.Manager;
 using LessPaper.Shared.Interfaces.WriteApi;
+using LessPaper.Shared.Rest.Models.DtoSwaggerExamples;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace LessPaper.GuardService
 {
@@ -36,10 +39,17 @@ namespace LessPaper.GuardService
             services.AddSingleton<IDbDirectoryManager, DbDirectoryManager>();
             services.AddSingleton<IDbFileManager, DbFileManager>();
 
-
+           
+            services.RegisterSwaggerSharedDtoExamples();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Guard API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Guard API", 
+                    Version = "v1"
+                });
+                c.EnableAnnotations();
+                c.ExampleFilters();
             });
 
             services.AddControllers();

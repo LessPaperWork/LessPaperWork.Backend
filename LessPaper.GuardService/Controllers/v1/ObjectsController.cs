@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using LessPaper.GuardService.Models.Api;
 using LessPaper.Shared.Enums;
 using LessPaper.Shared.Helper;
 using LessPaper.Shared.Interfaces.Database.Manager;
@@ -10,6 +9,7 @@ using LessPaper.Shared.Rest.Models.RequestDtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace LessPaper.GuardService.Controllers.v1
 {
@@ -219,19 +219,21 @@ namespace LessPaper.GuardService.Controllers.v1
                 return BadRequest();
             }
 
-            if (typeOfId == IdType.File)
+            switch (typeOfId)
             {
-                var fileMetadata = await fileManager.GetFileMetadata(requestingUserId, objectId, revisionNumber);
-                return new OkObjectResult(new FileMetadataDto(fileMetadata));
+                case IdType.File:
+                {
+                    var fileMetadata = await fileManager.GetFileMetadata(requestingUserId, objectId, revisionNumber);
+                    return new OkObjectResult(new FileMetadataDto(fileMetadata));
+                }
+                case IdType.Directory:
+                {
+                    var directoryMetadata = await directoryManager.GetDirectoryMetadata(requestingUserId, objectId);
+                    return new OkObjectResult(new DirectoryMetadataDto(directoryMetadata));
+                }
+                default:
+                    return BadRequest();
             }
-
-            if (typeOfId == IdType.Directory)
-            {
-                var directoryMetadata = await directoryManager.GetDirectoryMetadata(requestingUserId, objectId);
-                return new OkObjectResult(new DirectoryMetadataDto(directoryMetadata));
-            }
-
-            return BadRequest();
         }
 
     }

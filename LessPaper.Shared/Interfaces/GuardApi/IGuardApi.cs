@@ -31,17 +31,7 @@ namespace LessPaper.Shared.Interfaces.GuardApi
         /// <returns>Necessary credentials or null if user does not exist</returns>
         /// <exception cref="InvalidOperationException">Throws if service not available</exception>
         Task<IExtendedUserInformation> GetUserInformation(string email);
-
-
-        /// <summary>
-        /// Get user credentials for comparison with given data.
-        /// </summary>
-        /// <param name="requestingUserId">Id of the requesting user</param>
-        /// <param name="userId">Target user</param>
-        /// <returns>Basic user Information</returns>
-        /// <exception cref="InvalidOperationException">Throws if service not available</exception>
-        Task<IExtendedUserInformation> GetBasicUserInformation(string requestingUserId, string userId);
-
+        
         /// <summary>
         /// Get permissions of an array of files/directories
         /// </summary>

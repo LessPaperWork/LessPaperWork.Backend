@@ -83,7 +83,7 @@ namespace LessPaper.WriteService.Controllers.v1
             {
                 // Upload file to bucket
                 await bucket.UploadEncrypted(
-                    config.Value.ExternalServices.MinioBucketName,
+                    config.Value.Minio.BucketName,
                     revisionId,
                     fileSize,
                     plaintextKeyBytes,
@@ -185,7 +185,7 @@ namespace LessPaper.WriteService.Controllers.v1
         /// Rename a file or a directory
         /// </summary>
         /// <returns></returns>
-        [HttpPost("{objectId}")]
+        [HttpPatch("{objectId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RenameObject(
@@ -287,7 +287,7 @@ namespace LessPaper.WriteService.Controllers.v1
             try
             {
                 var revisionIds = await guardApi.DeleteObject(requestingUserId, objectId);
-                await bucket.Delete(config.Value.ExternalServices.MinioBucketName, revisionIds);
+                await bucket.Delete(config.Value.Minio.BucketName, revisionIds);
                 
                 return Ok();
             }

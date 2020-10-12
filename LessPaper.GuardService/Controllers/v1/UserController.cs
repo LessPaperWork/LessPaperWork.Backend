@@ -1,12 +1,16 @@
-﻿using System.Threading.Tasks;
-using LessPaper.GuardService.Models.Api;
+﻿using System.ComponentModel;
+using System.Threading.Tasks;
 using LessPaper.Shared.Enums;
 using LessPaper.Shared.Helper;
 using LessPaper.Shared.Interfaces.Database.Manager;
 using LessPaper.Shared.Rest.Models.Dtos;
+using LessPaper.Shared.Rest.Models.DtoSwaggerExamples;
+using LessPaper.Shared.Rest.Models.RequestDtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace LessPaper.GuardService.Controllers.v1
 {
@@ -31,18 +35,24 @@ namespace LessPaper.GuardService.Controllers.v1
         [HttpPost()]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [SwaggerRequestExample(typeof(UserCreationDto), typeof(UserCreationDtoSwaggerExample))]
         public async Task<IActionResult> RegisterNewUser([FromBody] UserCreationDto request)
         {
-            if (!IdGenerator.IsType(request.UserId, IdType.User) ||
-                !ValidationHelper.IsValidEmailAddress(request.Email) ||
-                string.IsNullOrWhiteSpace(request.HashedPassword) ||
-                string.IsNullOrWhiteSpace(request.Salt) ||
-                string.IsNullOrWhiteSpace(request.EncryptedPrivateKey) ||
-                string.IsNullOrWhiteSpace(request.PublicKey))
-            {
-                return BadRequest();
-            }
-
+            logger.LogTrace($"Entering method {nameof(UserController) + "." + nameof(RegisterNewUser)}");
+            
+            if (!IdGenerator.IsType(request.UserId, IdType.User))
+                return BadRequest(new MessageDto("User id is not of type user"));
+            if (!ValidationHelper.IsValidEmailAddress(request.Email))
+                return BadRequest(new MessageDto("Email address is not valid"));
+            if (string.IsNullOrWhiteSpace(request.HashedPassword))
+                return BadRequest(new MessageDto("Hashed password is null or whitespace"));
+            if (string.IsNullOrWhiteSpace(request.Salt))
+                return BadRequest(new MessageDto("Salt is null or whitespace"));
+            if (string.IsNullOrWhiteSpace(request.EncryptedPrivateKey))
+                return BadRequest(new MessageDto("EncryptedPrivateKey is null or whitespace"));
+            if (string.IsNullOrWhiteSpace(request.PublicKey))
+                return BadRequest(new MessageDto("PublicKey is null or whitespace"));
+            
             var rootDirectoryId = IdGenerator.NewId(IdType.Directory);
 
             var successful = await userManager.InsertUser(
@@ -55,9 +65,9 @@ namespace LessPaper.GuardService.Controllers.v1
                 request.EncryptedPrivateKey);
 
             if (!successful)
-                return BadRequest();
+                return BadRequest(new MessageDto("Database insertion failed"));
 
-            return Ok();
+            return Ok(new MessageDto("User created"));
         }
 
         [HttpGet("{email}")]
@@ -65,6 +75,8 @@ namespace LessPaper.GuardService.Controllers.v1
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetUserInformation([FromRoute] string email)
         {
+            logger.LogTrace($"Entering method {nameof(UserController) + "." + nameof(GetUserInformation)}");
+
             if (!ValidationHelper.IsValidEmailAddress(email))
                 return BadRequest();
 
