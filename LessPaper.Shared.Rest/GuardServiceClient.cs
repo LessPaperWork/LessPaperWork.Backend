@@ -108,7 +108,7 @@ namespace LessPaper.Shared.Rest
             var (result, statusCode) =
                 await client.ExecuteAsync<string>(
                     HttpRequestMethod.Post,
-                    "v1/directories/{parentDirectoryId}/{directoryName}",
+                    "v1/Objects/directories/{parentDirectoryId}/{directoryName}",
                     null,
                     new Dictionary<string, object>
                     {
@@ -121,8 +121,8 @@ namespace LessPaper.Shared.Rest
                     }
                 );
 
-            if (statusCode != HttpStatusCode.Created)
-                throw new InvalidStatusCodeException(HttpStatusCode.Created, statusCode);
+            if (statusCode != HttpStatusCode.OK)
+                throw new InvalidStatusCodeException(HttpStatusCode.OK, statusCode);
 
             return result;
         }
@@ -135,7 +135,7 @@ namespace LessPaper.Shared.Rest
             var (result, statusCode) =
                 await client.ExecuteAsync<string[]>(
                     HttpRequestMethod.Delete,
-                    "v1/{objectId}",
+                    "v1/Objects/{objectId}",
                     null,
                     new Dictionary<string, object>
                     {
@@ -162,7 +162,7 @@ namespace LessPaper.Shared.Rest
             var (result, statusCode) =
                 await client.ExecuteAsync<int>(
                     HttpRequestMethod.Post,
-                    "v1/files/{directoryId}/{fileId}/{revisionId}",
+                    "v1/Objects/files/{directoryId}/{fileId}/{revisionId}",
                     new AddFileDto
                     {
                         DocumentLanguage = documentLanguage,
@@ -197,7 +197,7 @@ namespace LessPaper.Shared.Rest
             var statusCode =
                 await client.ExecuteAsync(
                     HttpRequestMethod.Delete,
-                    "v1/{objectId}/{newParentDirectoryId}",
+                    "v1/Objects/{objectId}/{newParentDirectoryId}",
                     null,
                     new Dictionary<string, object>
                     {
@@ -224,7 +224,7 @@ namespace LessPaper.Shared.Rest
             var statusCode =
                 await client.ExecuteAsync(
                     HttpRequestMethod.Post,
-                    "v1/{objectId}",
+                    "v1/Objects/{objectId}",
                     null,
                     new Dictionary<string, object>
                     {
@@ -273,7 +273,7 @@ namespace LessPaper.Shared.Rest
                     (result, statusCode) =
                         await client.ExecuteAsync<DirectoryMetadataDto>(
                             HttpRequestMethod.Get,
-                            "v1/{objectId}",
+                            "v1/Objects/{objectId}",
                             null,
                             pathParameter,
                             queryParameter
@@ -283,7 +283,7 @@ namespace LessPaper.Shared.Rest
                     (result, statusCode) =
                         await client.ExecuteAsync<FileMetadataDto>(
                             HttpRequestMethod.Get,
-                            "v1/{objectId}",
+                            "v1/Objects/{objectId}",
                             null,
                             pathParameter,
                             queryParameter

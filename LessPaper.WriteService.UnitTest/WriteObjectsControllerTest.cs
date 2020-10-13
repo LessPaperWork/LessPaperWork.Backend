@@ -8,6 +8,7 @@ using LessPaper.Shared.Interfaces.GuardApi;
 using LessPaper.Shared.Interfaces.Queuing;
 using LessPaper.Shared.Interfaces.WriteApi.WriteObjectApi;
 using LessPaper.Shared.Queueing.Interfaces;
+using LessPaper.Shared.Rest.Models.Dtos;
 using LessPaper.WriteService.Controllers;
 using LessPaper.WriteService.Controllers.v1;
 using LessPaper.WriteService.Models.Request;
@@ -230,7 +231,7 @@ namespace LessPaper.WriteService.UnitTest
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, null, queueMock.Object);
 
-            var request = new CreateDirectoryRequest()
+            var request = new CreateDirectoryDto()
             {
                 SubDirectoryName = "MySubDir"
             };

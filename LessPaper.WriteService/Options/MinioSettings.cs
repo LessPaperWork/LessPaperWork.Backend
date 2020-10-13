@@ -17,7 +17,7 @@ namespace LessPaper.WriteService.Options
 
         public MinioSettings(IOptions<AppSettings> settings)
         {
-            Hostname = settings.Value.Minio.Hostname;
+            HostName = settings.Value.Minio.HostName;
             AccessKey = settings.Value.Minio.AccessKey;
             SecretKey = settings.Value.Minio.SecretKey;
             BucketName = settings.Value.Minio.BucketName;
@@ -25,7 +25,7 @@ namespace LessPaper.WriteService.Options
 
 
         /// <inheritdoc />
-        public string Hostname { get; set; }
+        public string HostName { get; set; }
 
         /// <inheritdoc />
         public string AccessKey { get; set; }

@@ -21,6 +21,7 @@ namespace LessPaper.WriteService
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls("http://localhost:5002");
                 });
     }
 }

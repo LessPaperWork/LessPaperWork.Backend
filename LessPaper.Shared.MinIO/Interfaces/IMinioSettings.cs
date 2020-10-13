@@ -9,7 +9,7 @@ namespace LessPaper.Shared.MinIO.Interfaces
         /// <summary>
         /// 
         /// </summary>
-        string Hostname { get; }
+        string HostName { get; }
 
 
         /// <summary>

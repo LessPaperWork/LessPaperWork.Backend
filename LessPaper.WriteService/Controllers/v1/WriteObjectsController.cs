@@ -12,8 +12,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using LessPaper.Shared.Interfaces.Bucket;
 using LessPaper.Shared.Interfaces.Queuing;
+using LessPaper.Shared.Rest.Models.Dtos;
+using LessPaper.Shared.Rest.Models.DtoSwaggerExamples;
 using LessPaper.Shared.Rest.Models.RequestDtos;
 using LessPaper.WriteService.Models.Response;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace LessPaper.WriteService.Controllers.v1
 {
@@ -138,16 +141,17 @@ namespace LessPaper.WriteService.Controllers.v1
         /// Create a new directory in a given location
         /// </summary>
         /// <param name="directoryId">Directory id</param>
-        /// <param name="createDirectoryRequest"></param>
+        /// <param name="createDirectoryDto"></param>
         /// <param name="requestingUserId"></param>
         /// <returns></returns>
         [HttpPost("/directories/{directoryId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [SwaggerRequestExample(typeof(CreateDirectoryDto), typeof(CreateDirectoryDtoSwaggerExample))]
         public async Task<IActionResult> CreateDirectory(
             [FromRoute] string directoryId,
             [FromQuery] string requestingUserId,
-            [FromBody] CreateDirectoryRequest createDirectoryRequest
+            [FromBody] CreateDirectoryDto createDirectoryDto
         )
         {
             #region - Input data validation -
@@ -155,7 +159,7 @@ namespace LessPaper.WriteService.Controllers.v1
             if (!IdGenerator.TypeFromId(directoryId, out var typOfId) || typOfId != IdType.Directory)
                 return BadRequest();
 
-            if (string.IsNullOrWhiteSpace(createDirectoryRequest.SubDirectoryName))
+            if (string.IsNullOrWhiteSpace(createDirectoryDto.SubDirectoryName))
                 return BadRequest();
 
             #endregion
@@ -166,7 +170,7 @@ namespace LessPaper.WriteService.Controllers.v1
                 var newDirectoryId = await guardApi.AddDirectory(
                     requestingUserId,
                     directoryId,
-                    createDirectoryRequest.SubDirectoryName);
+                    createDirectoryDto.SubDirectoryName);
 
                 if (!IdGenerator.IsType(newDirectoryId, IdType.Directory))
                     return BadRequest();

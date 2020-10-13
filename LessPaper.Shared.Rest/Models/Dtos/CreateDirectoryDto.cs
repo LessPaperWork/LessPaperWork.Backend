@@ -2,9 +2,9 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LessPaper.WriteService.Models.Request
+namespace LessPaper.Shared.Rest.Models.Dtos
 {
-    public class CreateDirectoryRequest
+    public class CreateDirectoryDto
     {
         [Required]
         [JsonPropertyName("sub_directory_name")]

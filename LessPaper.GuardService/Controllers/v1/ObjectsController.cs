@@ -1,14 +1,17 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using LessPaper.Shared.Enums;
 using LessPaper.Shared.Helper;
 using LessPaper.Shared.Interfaces.Database.Manager;
 using LessPaper.Shared.Rest.Models.Dtos;
+using LessPaper.Shared.Rest.Models.DtoSwaggerExamples;
 using LessPaper.Shared.Rest.Models.RequestDtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace LessPaper.GuardService.Controllers.v1
@@ -68,6 +71,7 @@ namespace LessPaper.GuardService.Controllers.v1
         [HttpPost("directories/{parentDirectoryId}/{directoryName}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [SwaggerParameterx("requestingUserId", "0146613259928c4bd8a58dfd0fca344e47")]
         public async Task<IActionResult> AddDirectory(
             [FromQuery] string requestingUserId, 
             [FromRoute] string parentDirectoryId, 

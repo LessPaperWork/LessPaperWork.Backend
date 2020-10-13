@@ -13,7 +13,7 @@ namespace LessPaper.Shared.MinIO.Models
         protected MinioBaseBucket(IMinioSettings settings)
         {
             MinioClient = new MinioClient(
-                settings.Hostname,
+                settings.HostName,
                 settings.AccessKey,
                 settings.SecretKey).WithSSL();
         }

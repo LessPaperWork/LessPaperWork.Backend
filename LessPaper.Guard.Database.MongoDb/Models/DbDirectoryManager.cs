@@ -195,7 +195,7 @@ namespace LessPaper.Guard.Database.MongoDb.Models
             catch (MongoException e)
             {
                 await session.AbortTransactionAsync();
-                throw new DatabaseException("Database error during file inserting. See inner exception.", e);
+                throw new DatabaseException("Database error during directory inserting. See inner exception.", e);
             }
             catch (Exception e)
             {

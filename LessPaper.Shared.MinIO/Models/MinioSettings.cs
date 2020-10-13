@@ -9,12 +9,12 @@ namespace LessPaper.Shared.MinIO.Models
     {
         public MinioSettings(string hostname, string accessKey, string secretKey)
         {
-            Hostname = hostname;
+            HostName = hostname;
             AccessKey = accessKey;
             SecretKey = secretKey;
         }
 
-        public string Hostname { get; }
+        public string HostName { get; }
         public string AccessKey { get; }
         public string SecretKey { get; }
     }

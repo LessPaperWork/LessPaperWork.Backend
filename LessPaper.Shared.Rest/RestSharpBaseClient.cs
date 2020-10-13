@@ -21,7 +21,7 @@ namespace LessPaper.Shared.Rest
         {
             this.logger = logger;
             client = new RestClient(clientSettings.BaseUrl).UseSystemTextJson();
-           
+
             if (logger == null)
                 throw new Exception("Logger instance is null");
         }
@@ -58,8 +58,8 @@ namespace LessPaper.Shared.Rest
 
             logger.LogDebug(
                 $"REST Request:\n" +
-                      $"Request: { JsonSerializer.Serialize(requestToLog)}, \n" +
-                      $"Response: { JsonSerializer.Serialize(responseToLog)}");
+                $"Request: {JsonSerializer.Serialize(requestToLog)}, \n" +
+                $"Response: {JsonSerializer.Serialize(responseToLog)}");
         }
 
         private Method MapHttpMethod(HttpRequestMethod method)
@@ -94,37 +94,44 @@ namespace LessPaper.Shared.Rest
         {
             logger.LogTrace($"Entering method {nameof(BuildRestRequest)}");
 
-            var request = new RestRequest(endpoint, restMethod) {Timeout = 1000};
+            var request = new RestRequest(endpoint, restMethod)
+            {
+#if DEBUG
+                Timeout = 600000
+#else
+                Timeout = 1000
+#endif
+            };
 
             if (pathParameter != null)
                 foreach (var o in pathParameter)
                     request.AddUrlSegment(o.Key, o.Value);
-
+    
             if (queryParameter != null)
                 foreach (var o in queryParameter)
-                    request.AddParameter(o.Key, o.Value);
+                    request.AddParameter(o.Key, o.Value, ParameterType.QueryString);
 
             if (payload != null)
                 request.AddJsonBody(payload);
-            
+
             return request;
         }
 
         /// <inheritdoc />
         public async Task<(TResult, HttpStatusCode)> ExecuteAsync<TResult>(
             HttpRequestMethod requestMethod,
-            string endpoint, 
-            object payload = null, 
-            Dictionary<string, object> pathParameter = null, 
+            string endpoint,
+            object payload = null,
+            Dictionary<string, object> pathParameter = null,
             Dictionary<string, object> queryParameter = null)
         {
             logger.LogTrace($"Entering method {nameof(ExecuteAsync)} with response payload");
 
             var request = BuildRestRequest(
-                endpoint, 
-                MapHttpMethod(requestMethod), 
-                payload, 
-                pathParameter, 
+                endpoint,
+                MapHttpMethod(requestMethod),
+                payload,
+                pathParameter,
                 queryParameter);
 
             var result = await client.ExecuteAsync<TResult>(request);
@@ -135,25 +142,24 @@ namespace LessPaper.Shared.Rest
         /// <inheritdoc />
         public async Task<HttpStatusCode> ExecuteAsync(
             HttpRequestMethod requestMethod,
-            string endpoint, 
-            object payload = null, 
-            Dictionary<string, object> pathParameter = null, 
+            string endpoint,
+            object payload = null,
+            Dictionary<string, object> pathParameter = null,
             Dictionary<string, object> queryParameter = null)
         {
             logger.LogTrace($"Entering method {nameof(ExecuteAsync)} without response payload");
 
             var request = BuildRestRequest(
-                endpoint, 
-                MapHttpMethod(requestMethod), 
-                payload, 
-                pathParameter, 
+                endpoint,
+                MapHttpMethod(requestMethod),
+                payload,
+                pathParameter,
                 queryParameter);
 
             var result = await client.ExecuteAsync(request);
             PrettyLogOnDebug(request, result);
-            
+
             return result.StatusCode;
         }
-
     }
 }
