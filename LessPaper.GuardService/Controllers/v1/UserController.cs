@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Net;
 using System.Threading.Tasks;
 using LessPaper.Shared.Enums;
 using LessPaper.Shared.Helper;
@@ -32,14 +33,14 @@ namespace LessPaper.GuardService.Controllers.v1
         }
 
 
-        [HttpPost()]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [SwaggerRequestExample(typeof(UserCreationDto), typeof(UserCreationDtoSwaggerExample))]
         public async Task<IActionResult> RegisterNewUser([FromBody] UserCreationDto request)
         {
             logger.LogTrace($"Entering method {nameof(UserController) + "." + nameof(RegisterNewUser)}");
-            
+
             if (!IdGenerator.IsType(request.UserId, IdType.User))
                 return BadRequest(new MessageDto("User id is not of type user"));
             if (!ValidationHelper.IsValidEmailAddress(request.Email))
@@ -52,7 +53,7 @@ namespace LessPaper.GuardService.Controllers.v1
                 return BadRequest(new MessageDto("EncryptedPrivateKey is null or whitespace"));
             if (string.IsNullOrWhiteSpace(request.PublicKey))
                 return BadRequest(new MessageDto("PublicKey is null or whitespace"));
-            
+
             var rootDirectoryId = IdGenerator.NewId(IdType.Directory);
 
             var successful = await userManager.InsertUser(
@@ -64,10 +65,8 @@ namespace LessPaper.GuardService.Controllers.v1
                 request.PublicKey,
                 request.EncryptedPrivateKey);
 
-            if (!successful)
-                return BadRequest(new MessageDto("Database insertion failed"));
-
-            return Ok(new MessageDto("User created"));
+            return !successful ? BadRequest(new MessageDto("Database insertion failed")) : 
+                new ObjectResult(new MessageDto("User created")) { StatusCode = StatusCodes.Status201Created };
         }
 
         [HttpGet("{email}")]
@@ -78,11 +77,11 @@ namespace LessPaper.GuardService.Controllers.v1
             logger.LogTrace($"Entering method {nameof(UserController) + "." + nameof(GetUserInformation)}");
 
             if (!ValidationHelper.IsValidEmailAddress(email))
-                return BadRequest();
+                return BadRequest(new MessageDto("Email address is not valid"));
 
             var userInformation = await userManager.GetUserInformation(email);
             if (userInformation == null)
-                return BadRequest();
+                return BadRequest(new MessageDto("User not found"));
 
             return new OkObjectResult(new ExtendedUserInformationDto(userInformation));
         }

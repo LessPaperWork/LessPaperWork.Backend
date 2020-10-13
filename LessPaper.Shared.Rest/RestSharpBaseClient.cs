@@ -94,7 +94,7 @@ namespace LessPaper.Shared.Rest
         {
             logger.LogTrace($"Entering method {nameof(BuildRestRequest)}");
 
-            var request = new RestRequest(endpoint, restMethod);
+            var request = new RestRequest(endpoint, restMethod) {Timeout = 1000};
 
             if (pathParameter != null)
                 foreach (var o in pathParameter)
@@ -151,6 +151,7 @@ namespace LessPaper.Shared.Rest
 
             var result = await client.ExecuteAsync(request);
             PrettyLogOnDebug(request, result);
+            
             return result.StatusCode;
         }
 

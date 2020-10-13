@@ -11,6 +11,7 @@ using LessPaper.Shared.Queueing.Interfaces.RabbitMq;
 using LessPaper.Shared.Queueing.Models.RabbitMq;
 using LessPaper.Shared.Rest;
 using LessPaper.Shared.Rest.Interface;
+using LessPaper.Shared.Rest.Models.DtoSwaggerExamples;
 using LessPaper.WriteService.Models;
 using LessPaper.WriteService.Options;
 using Microsoft.AspNetCore.Builder;
@@ -23,6 +24,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 using MinioSettings = LessPaper.WriteService.Options.MinioSettings;
 
 namespace LessPaper.WriteService
@@ -53,6 +55,7 @@ namespace LessPaper.WriteService
             services.AddSingleton<IBaseClient, RestSharpBaseClient>();
             services.AddSingleton<IGuardApi, GuardServiceClient>();
 
+            services.RegisterSwaggerSharedDtoExamples();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -61,6 +64,7 @@ namespace LessPaper.WriteService
                     Version = "v1"
                 });
                 c.EnableAnnotations();
+                c.ExampleFilters();
             });
 
             services.AddControllers();

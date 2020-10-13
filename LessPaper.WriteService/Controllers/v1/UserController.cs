@@ -4,13 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using LessPaper.Shared.Helper;
 using LessPaper.Shared.Interfaces.GuardApi;
+using LessPaper.Shared.Rest.Exceptions;
 using LessPaper.Shared.Rest.Models.Dtos;
+using LessPaper.Shared.Rest.Models.DtoSwaggerExamples;
 using LessPaper.Shared.Rest.Models.RequestDtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using Swashbuckle.AspNetCore.Filters;
 
 namespace LessPaper.WriteService.Controllers.v1
 {
@@ -28,23 +29,43 @@ namespace LessPaper.WriteService.Controllers.v1
         }
 
 
-        [HttpPost()]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [SwaggerRequestExample(typeof(UserCreationDto), typeof(UserCreationDtoSwaggerExample))]
         public async Task<IActionResult> RegisterNewUser([FromBody] UserCreationDto request)
         {
-            var successful = await guardApi.RegisterNewUser(
-                request.Email, 
-                request.HashedPassword, 
-                request.Salt, 
-                request.UserId,
-                request.PublicKey, 
-                request.EncryptedPrivateKey);
+            logger.LogTrace($"Entering method {nameof(UserController) + "." + nameof(RegisterNewUser)}");
 
-            if (!successful)
-                return BadRequest();
+            try
+            {
+                var successful = await guardApi.RegisterNewUser(
+                    request.Email,
+                    request.HashedPassword,
+                    request.Salt,
+                    request.UserId,
+                    request.PublicKey,
+                    request.EncryptedPrivateKey);
 
-            return Ok();
+                if (!successful)
+                    return BadRequest(new MessageDto("Guard api operation was not successful"));
+            }
+            catch (InvalidStatusCodeException e)
+            {
+                logger.LogError("Received an invalid status code", e);
+                return BadRequest(e.ServerMessage);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Unexpected exception occured during the call of the guard api", e);
+                return new ObjectResult(new MessageDto("Unexpected exception occured during the call of the guard api"))
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
+
+            logger.LogInformation("User created successfully");
+            return new ObjectResult(new MessageDto("User created")) { StatusCode = StatusCodes.Status201Created };
         }
 
         [HttpGet("{email}")]

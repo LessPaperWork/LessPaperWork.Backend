@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LessPaper.Shared.Rest.Models.Dtos
 {
-    public class BasicUserInformationDto : IBasicUserInformation
+    public class BasicUserInformationDto : MessageDto, IBasicUserInformation
     {
         public BasicUserInformationDto()
         {
