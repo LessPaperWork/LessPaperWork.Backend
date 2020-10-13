@@ -66,6 +66,11 @@
 !LessPaper.WriteService/appsettings.Development.json
 !LessPaper.WriteService/appsettings.json
 
+### LessPaper.GuardService
+!LessPaper.GuardService/Properties/launchSettings.json
+!LessPaper.GuardService/appsettings.Development.json
+!LessPaper.GuardService/appsettings.json
+
 ### LessPaper.Shared.MinIO
 !LessPaper.Shared.MinIO.IntegrationTest/TestCertificates/private.key
 !LessPaper.Shared.MinIO.IntegrationTest/TestCertificates/public.crt
