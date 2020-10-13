@@ -50,7 +50,7 @@ namespace LessPaper.GuardService
                 });
                 c.EnableAnnotations();
                 c.ExampleFilters();
-                c.OperationFilter<SwaggerParameterAttributeFilter>();
+                c.OperationFilter<SwaggerParameterExampleFilter>();
             });
 
             services.AddControllers();

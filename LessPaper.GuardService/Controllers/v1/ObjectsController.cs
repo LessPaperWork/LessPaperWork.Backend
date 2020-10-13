@@ -71,13 +71,10 @@ namespace LessPaper.GuardService.Controllers.v1
         [HttpPost("directories/{parentDirectoryId}/{directoryName}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [SwaggerParameterExampleValue("requestingUserId", "MyReqUserId")]
-        [SwaggerParameterExampleValue("parentDirectoryId", "MyParentDir")]
-        [SwaggerParameterExampleValue("directoryName", "MyDirName")]
         public async Task<IActionResult> AddDirectory(
-            [FromQuery] string requestingUserId, 
-            [FromRoute] string parentDirectoryId, 
-            [FromRoute] string directoryName)
+            [FromQuery][SwaggerParameterExample("MyUserId")] string requestingUserId,
+            [FromRoute][SwaggerParameterExample("MyParentId")] string parentDirectoryId,
+            [FromRoute][SwaggerParameterExample("MyDirName")] string directoryName)
         {
             if (!IdGenerator.IsType(requestingUserId, IdType.User) ||
                 !IdGenerator.IsType(parentDirectoryId, IdType.Directory) ||
@@ -92,7 +89,7 @@ namespace LessPaper.GuardService.Controllers.v1
 
             return new OkObjectResult(newDirectoryId);
         }
-        
+
         [HttpDelete("{objectId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -123,7 +120,7 @@ namespace LessPaper.GuardService.Controllers.v1
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AddFile(
-            [FromQuery] string requestingUserId, 
+            [FromQuery] string requestingUserId,
             [FromRoute] string directoryId,
             [FromRoute] string fileId,
             [FromRoute] string revisionId,
@@ -134,7 +131,7 @@ namespace LessPaper.GuardService.Controllers.v1
                 !IdGenerator.IsType(directoryId, IdType.Directory) ||
                 !IdGenerator.IsType(fileId, IdType.File) ||
                 request.EncryptedKey.Count == 0 ||
-                request.EncryptedKey.Any(x =>  string.IsNullOrWhiteSpace(x.Key) || string.IsNullOrWhiteSpace(x.Value)) ||
+                request.EncryptedKey.Any(x => string.IsNullOrWhiteSpace(x.Key) || string.IsNullOrWhiteSpace(x.Value)) ||
                 string.IsNullOrWhiteSpace(request.FileName) ||
                 request.FileSize == 0 ||
                 request.FileSize > 10_000_000)
@@ -188,7 +185,7 @@ namespace LessPaper.GuardService.Controllers.v1
         [HttpPost("{objectId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> RenameObject([FromQuery]string requestingUserId, [FromQuery] string objectId, [FromQuery] string newName)
+        public async Task<IActionResult> RenameObject([FromQuery] string requestingUserId, [FromQuery] string objectId, [FromQuery] string newName)
         {
             if (!IdGenerator.IsType(requestingUserId, IdType.User) ||
                 string.IsNullOrWhiteSpace(newName) ||
@@ -228,15 +225,15 @@ namespace LessPaper.GuardService.Controllers.v1
             switch (typeOfId)
             {
                 case IdType.File:
-                {
-                    var fileMetadata = await fileManager.GetFileMetadata(requestingUserId, objectId, revisionNumber);
-                    return new OkObjectResult(new FileMetadataDto(fileMetadata));
-                }
+                    {
+                        var fileMetadata = await fileManager.GetFileMetadata(requestingUserId, objectId, revisionNumber);
+                        return new OkObjectResult(new FileMetadataDto(fileMetadata));
+                    }
                 case IdType.Directory:
-                {
-                    var directoryMetadata = await directoryManager.GetDirectoryMetadata(requestingUserId, objectId);
-                    return new OkObjectResult(new DirectoryMetadataDto(directoryMetadata));
-                }
+                    {
+                        var directoryMetadata = await directoryManager.GetDirectoryMetadata(requestingUserId, objectId);
+                        return new OkObjectResult(new DirectoryMetadataDto(directoryMetadata));
+                    }
                 default:
                     return BadRequest();
             }

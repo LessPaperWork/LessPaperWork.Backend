@@ -4,22 +4,23 @@ using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Linq;
-using System.Security.Policy;
 
 namespace LessPaper.Shared.Rest.Models.DtoSwaggerExamples
 {
-    public class SwaggerParameterAttributeFilter : IOperationFilter
+    public class SwaggerParameterExampleFilter : IOperationFilter
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            // Determine SwaggerParameterAttributes of current method
-            var attributes = context.MethodInfo.DeclaringType?.GetCustomAttributes(true)
-                .Union(context.MethodInfo.GetCustomAttributes(true))
-                .OfType<SwaggerParameterExampleValue>()
+            // Extract method parameters
+            var parameters = context
+                .MethodInfo
+                .GetParameters()
                 .ToList();
 
-            // Ensure at least one attribute exists
-            if (attributes == null || !attributes.Any())
+            // Check if SwaggerSingleParameterAttribute exists on any property
+            if (parameters
+                .Select(x => Attribute.GetCustomAttribute(x, typeof(SwaggerParameterExample)))
+                .All(x => x == null))
                 return;
 
             //Convert OpenApiParameters and the corresponding parameter type to dictionary
@@ -27,23 +28,27 @@ namespace LessPaper.Shared.Rest.Models.DtoSwaggerExamples
                 .Parameters
                 .ToDictionary(x => x.Name.ToLower(), k => k);
 
-            var methodParameterTypes = context
-                .MethodInfo
-                .GetParameters()
-                .ToDictionary(x => x.Name.ToLower(), x => x.ParameterType);
-
-            //Loop each attribute
-            foreach (var attribute in attributes)
+            //Loop each parameter of the method
+            foreach (var parameter in parameters)
             {
-                var targetParameterName = attribute.ParameterName.ToLower();
+                var attribute = parameter
+                    .GetCustomAttributes(typeof(SwaggerParameterExample), true)
+                    .Cast<SwaggerParameterExample>()
+                    .FirstOrDefault();
+
+                if (attribute == null)
+                    continue;
+
+                var parameterType = parameter.ParameterType;
+                var targetParameterName = parameter.Name.ToLower();
 
                 // Resolve the real method parameters from given attribute parameter name
-                if (!openApiParameters.TryGetValue(targetParameterName, out var openApiParameter) ||
-                    !methodParameterTypes.TryGetValue(targetParameterName, out var parameterType))
+                if (!openApiParameters.TryGetValue(targetParameterName, out var openApiParameter))
                     throw new KeyNotFoundException(
-                        $"Swagger example attribute for parameter {attribute.ParameterName} of method {context.MethodInfo.Name} was" +
-                        $" defined but the method does not contain any parameter with this name. Check spelling.");
-                
+                        $"OpenAPI definition could found {targetParameterName} of method {context.MethodInfo.Name}.");
+
+                openApiParameter.Required = attribute.IsRequired;
+
                 // Generate example value of correct type
                 if (parameterType == typeof(string))
                     openApiParameter.Example = new OpenApiString(attribute.ParameterValue.ToString());
@@ -64,8 +69,9 @@ namespace LessPaper.Shared.Rest.Models.DtoSwaggerExamples
 
             }
 
-
         }
-    }
 
+
+    }
 }
+
