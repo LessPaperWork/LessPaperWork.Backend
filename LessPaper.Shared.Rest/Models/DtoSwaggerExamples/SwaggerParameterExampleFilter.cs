@@ -49,6 +49,13 @@ namespace LessPaper.Shared.Rest.Models.DtoSwaggerExamples
 
                 openApiParameter.Required = attribute.IsRequired;
 
+                if (attribute.ParameterValue.GetType() != parameterType)
+                {
+                    throw new InvalidCastException($"Generation of swagger example failed. Example data of type {attribute.ParameterValue.GetType().Name} does not match target type {parameterType.Name}. " +
+                                                   $"Error occured for method with name {context.MethodInfo.Name} " +
+                                                   $"and parameter with name {openApiParameter.Name}.");
+                }
+
                 // Generate example value of correct type
                 if (parameterType == typeof(string))
                     openApiParameter.Example = new OpenApiString(attribute.ParameterValue.ToString());

@@ -12,7 +12,7 @@ namespace LessPaper.Shared.Rest.Models.DtoSwaggerExamples
         /// </summary>
         /// <param name="parameterValue">Value of property. Must match property type</param>
         /// <param name="isRequired">Indicates if the parameter is required or optional</param>
-        public SwaggerParameterExample(string parameterValue, bool isRequired = true)
+        public SwaggerParameterExample(object parameterValue, bool isRequired = true)
         {
             ParameterValue = parameterValue;
             IsRequired = isRequired;
