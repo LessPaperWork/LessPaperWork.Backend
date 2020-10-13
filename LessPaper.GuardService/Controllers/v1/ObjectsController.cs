@@ -72,7 +72,7 @@ namespace LessPaper.GuardService.Controllers.v1
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AddDirectory(
-            [FromQuery][SwaggerParameterExample(12)] string requestingUserId,
+            [FromQuery][SwaggerParameterExample("Test")] string requestingUserId,
             [FromRoute][SwaggerParameterExample("MyParentId")] string parentDirectoryId,
             [FromRoute][SwaggerParameterExample("MyDirName")] string directoryName)
         {
