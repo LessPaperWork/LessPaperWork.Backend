@@ -71,7 +71,9 @@ namespace LessPaper.GuardService.Controllers.v1
         [HttpPost("directories/{parentDirectoryId}/{directoryName}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [SwaggerParameterx("requestingUserId", "0146613259928c4bd8a58dfd0fca344e47")]
+        [SwaggerParameterExampleValue("requestingUserId", "MyReqUserId")]
+        [SwaggerParameterExampleValue("parentDirectoryId", "MyParentDir")]
+        [SwaggerParameterExampleValue("directoryName", "MyDirName")]
         public async Task<IActionResult> AddDirectory(
             [FromQuery] string requestingUserId, 
             [FromRoute] string parentDirectoryId, 

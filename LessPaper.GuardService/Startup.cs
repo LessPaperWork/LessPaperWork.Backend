@@ -43,7 +43,6 @@ namespace LessPaper.GuardService
             services.RegisterSwaggerSharedDtoExamples();
             services.AddSwaggerGen(c =>
             {
-                c.OperationFilter<SwaggerParameterAttributeFilter>();
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "Guard API", 
@@ -51,6 +50,7 @@ namespace LessPaper.GuardService
                 });
                 c.EnableAnnotations();
                 c.ExampleFilters();
+                c.OperationFilter<SwaggerParameterAttributeFilter>();
             });
 
             services.AddControllers();
