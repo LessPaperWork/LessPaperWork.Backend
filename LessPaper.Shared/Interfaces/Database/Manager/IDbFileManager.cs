@@ -19,7 +19,7 @@ namespace LessPaper.Shared.Interfaces.Database.Manager
         /// <param name="fileId">File id</param>
         /// <param name="fileName">Name of the file</param>
         /// <param name="fileSize">Size/Length of the file</param>
-        /// <param name="encryptedKey">Encrypted key</param>
+        /// <param name="encryptedKey">Encrypted keys userid -> encrypted key</param>
         /// <param name="documentLanguage">Language of the document</param>
         /// <param name="fileExtension">Type of the file</param>
         /// <param name="blobId">Id of the binary blob</param>

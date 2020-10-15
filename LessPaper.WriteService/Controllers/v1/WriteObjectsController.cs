@@ -53,29 +53,35 @@ namespace LessPaper.WriteService.Controllers.v1
             [FromQuery] string requestingUserId)
         {
             #region - Input data validation
-
+            
+            if (!IdGenerator.IsType(requestingUserId, IdType.User))
+                return BadRequest(new MessageDto("Requesting user id is not of type user"));
             if (!IdGenerator.TypeFromId(directoryId, out var typOfId) || typOfId != IdType.Directory)
-                return BadRequest();
+                return BadRequest(new MessageDto("Directory id is not of type directory"));
+            if (string.IsNullOrWhiteSpace(fileData.FileName))
+                return BadRequest(new MessageDto("Invalid file name"));
 
             if (fileData.File == null ||
                 fileData.File.Length <= 0 ||
                 fileData.File.Length > int.MaxValue ||
-                fileData.File.Length > config.Value.ValidationRules.MaxFileSizeInBytes ||
-                string.IsNullOrWhiteSpace(fileData.FileName) ||
-                fileData.EncryptedKey.Count == 0 ||
+                fileData.File.Length > config.Value.ValidationRules.MaxFileSizeInBytes)
+            {
+                return BadRequest(new MessageDto("Invalid file length"));
+            }
+  
+            if (fileData.EncryptedKey.Count == 0 ||
                 !fileData.EncryptedKey.ContainsKey(requestingUserId) ||
                 fileData.EncryptedKey.Any(x => string.IsNullOrWhiteSpace(x.Key) || string.IsNullOrWhiteSpace(x.Value)) ||
                 string.IsNullOrWhiteSpace(fileData.PlaintextKey))
             {
-                return BadRequest();
+                return BadRequest(new MessageDto("Encrypted keys are not valid"));
             }
 
             var fileSize = (int)fileData.File.Length;
-
             var plaintextKeyBytes = Convert.FromBase64String(fileData.PlaintextKey);
             // Make sure the iv is 16 Bytes long and the key has exactly 32 Byte. 
             if (plaintextKeyBytes.Length != 16 + 32)
-                return BadRequest();
+                return BadRequest(new MessageDto("Invalid plaintext key size. Must equal 48 bytes."));
 
             #endregion
 
@@ -132,7 +138,10 @@ namespace LessPaper.WriteService.Controllers.v1
                 // TODO Write queue data to database if queue fails
 
                 Console.Write(e);
-                return BadRequest();
+                return new ObjectResult(new MessageDto("Database operation not successful"))
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
             }
         }
 

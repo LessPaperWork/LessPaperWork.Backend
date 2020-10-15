@@ -13,7 +13,6 @@ namespace LessPaper.Shared.Helper
         /// </summary>
         public const int IdLength = 34;
 
-
         /// <summary>
         /// Generates a new unique id
         /// </summary>
@@ -34,7 +33,7 @@ namespace LessPaper.Shared.Helper
         /// <returns>True if type is matched</returns>
         public static bool IsType(string id, IdType targetIdType)
         {
-            return TypeFromId(id, out var idType) && idType == targetIdType;
+            return id != null && TypeFromId(id, out var idType) && idType == targetIdType;
         }
 
         /// <summary>
@@ -45,12 +44,12 @@ namespace LessPaper.Shared.Helper
         /// <returns>True if the type of the id could be resolved</returns>
         public static bool TypeFromId(string id, out IdType typeOfId)
         {
-            if (id.Length != IdLength)
+            if (id == null || id.Length != IdLength)
             {
                 typeOfId = IdType.Undefined;
                 return false;
             }
-
+            
             // Get id character sequence and convert it to int
             var typeChars = id.Substring(0, 2);
             if (!int.TryParse(typeChars, out var typeNumber))

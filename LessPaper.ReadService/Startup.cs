@@ -1,14 +1,11 @@
+using LessPaper.ReadService.Options;
 using LessPaper.Shared.Interfaces.Bucket;
 using LessPaper.Shared.Interfaces.GuardApi;
-using LessPaper.Shared.Interfaces.Queuing;
 using LessPaper.Shared.MinIO.Interfaces;
 using LessPaper.Shared.MinIO.Models;
-using LessPaper.Shared.Queueing.Interfaces.RabbitMq;
-using LessPaper.Shared.Queueing.Models.RabbitMq;
 using LessPaper.Shared.Rest;
 using LessPaper.Shared.Rest.Interface;
 using LessPaper.Shared.Rest.Models.DtoSwaggerExamples;
-using LessPaper.WriteService.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -17,9 +14,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
-using MinioSettings = LessPaper.WriteService.Options.MinioSettings;
+using MinioSettings = LessPaper.ReadService.Options.MinioSettings;
 
-namespace LessPaper.WriteService
+namespace LessPaper.ReadService
 {
     public class Startup
     {
@@ -36,9 +33,6 @@ namespace LessPaper.WriteService
             services.AddOptions();
             services.Configure<AppSettings>(Configuration.GetSection("CustomSettings"));
 
-            services.AddSingleton<IRabbitMqSettings>(provider =>
-                new Options.RabbitMqSettings(provider.GetService<IOptions<AppSettings>>()));
-            services.AddSingleton<IQueueBuilder, RabbitMqBuilder>();
 
             services.AddSingleton<IMinioSettings>(provider => new MinioSettings(provider.GetService<IOptions<AppSettings>>()));
             services.AddSingleton<IWritableBucket, MinioBucket>();
@@ -52,7 +46,7 @@ namespace LessPaper.WriteService
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    Title = "Write API",
+                    Title = "Read API",
                     Version = "v1"
                 });
                 c.EnableAnnotations();
@@ -81,12 +75,11 @@ namespace LessPaper.WriteService
             {
                 endpoints.MapControllers();
             });
-
-
+            
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Write API v1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Read API v1");
             });
         }
     }

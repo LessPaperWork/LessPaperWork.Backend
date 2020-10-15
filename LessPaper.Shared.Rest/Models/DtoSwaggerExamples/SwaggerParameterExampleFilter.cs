@@ -24,6 +24,7 @@ namespace LessPaper.Shared.Rest.Models.DtoSwaggerExamples
                 return;
 
             //Convert OpenApiParameters and the corresponding parameter type to dictionary
+            //In case of an duplicate key exception check for matching path/query-parameter
             var openApiParameters = operation
                 .Parameters
                 .ToDictionary(x => x.Name.ToLower(), k => k);
