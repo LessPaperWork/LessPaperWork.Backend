@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using LessPaper.Shared.Enums;
@@ -9,6 +10,7 @@ using LessPaper.Shared.Interfaces.Queuing;
 using LessPaper.Shared.Interfaces.WriteApi.WriteObjectApi;
 using LessPaper.Shared.Queueing.Interfaces;
 using LessPaper.Shared.Rest.Models.Dtos;
+using LessPaper.Shared.Rest.Models.RequestDtos;
 using LessPaper.WriteService.Controllers;
 using LessPaper.WriteService.Controllers.v1;
 using LessPaper.WriteService.Models.Request;
@@ -28,9 +30,12 @@ namespace LessPaper.WriteService.UnitTest
         private Stream stream;
         private readonly byte[] ivAndKey1 = new byte[16 + 32];
         private readonly byte[] ivAndKey2 = new byte[16 + 32];
-
+        private string user1Id = IdGenerator.NewId(IdType.User);
+        private CryptoHelper.RsaKeyPair user1PubKey = CryptoHelper.GenerateRsaKeyPair();
+        private string user1EncFileKey;
         public WriteObjectsControllerTest()
         {
+            user1EncFileKey = CryptoHelper.RsaEncrypt(user1PubKey.PublicKey,CryptoHelper.GetRandomString(16));
             stream = new MemoryStream(payload);
             for (var i = 0; i < ivAndKey1.Length; i++)
             {
@@ -44,9 +49,9 @@ namespace LessPaper.WriteService.UnitTest
             var appSettings = new AppSettings
             {
                 ValidationRules = new ValidationRules { MaxFileSizeInBytes = 10 * 1024 * 1024 },
-                ExternalServices = new ExternalServices
+                Minio = new MinioSettings
                 {
-                    MinioBucketName = "lesspaper"
+                    BucketName = "lesspaper"
                 }
             };
 
@@ -76,44 +81,48 @@ namespace LessPaper.WriteService.UnitTest
             guardMock.Setup(api => api.AddFile(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<int>(),
                 It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<Dictionary<string, string>>(),
                 It.IsAny<DocumentLanguage>(),
                 It.IsAny<ExtensionType>())).ReturnsAsync(4);
 
             var bucketMock = new Mock<IWritableBucket>();
-            bucketMock.Setup(x => x.UploadFileEncrypted(
+            bucketMock.Setup(x => x.UploadEncrypted(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 It.IsAny<byte[]>(),
-                It.IsAny<Stream>())).ReturnsAsync(true);
+                It.IsAny<Stream>()));
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, bucketMock.Object, queueMock.Object);
 
 
-            var requestPayload = new UploadFileRequest
+            var requestPayload = new UploadFileDto
             {
                 DocumentLanguage = DocumentLanguage.German,
-                EncryptedKey = Convert.ToBase64String(ivAndKey1),
-                Name = "MyFile.pdf",
+                EncryptedKey = new Dictionary<string, string>()
+                {
+                    {user1Id, user1EncFileKey}
+                },
+                FileName = "MyFile.pdf",
                 PlaintextKey = Convert.ToBase64String(ivAndKey2),
+                FileExtension = ExtensionType.Pdf,
                 File = new FormFile(stream, 0, payload.Length, "", "")
             };
 
-            var response = await writeObjectsController.UploadFile(requestPayload, IdGenerator.NewId(IdType.Directory), 0);
+            var response = await writeObjectsController.UploadFile(requestPayload, IdGenerator.NewId(IdType.Directory), user1Id);
             var metadataResponseObject = Assert.IsType<OkObjectResult>(response);
             var metadataResponse = Assert.IsType<UploadFileResponse>(metadataResponseObject.Value);
 
-            Assert.Equal(requestPayload.Name, metadataResponse.ObjectName);
-            Assert.True(IdGenerator.TypeFromId(metadataResponse.ObjectId, out var typeOfId));
-            Assert.Equal(IdType.File, typeOfId);
-            Assert.True(DateTime.UtcNow - metadataResponse.LatestChangeDate < TimeSpan.FromHours(1));
-            Assert.Equal(DateTime.MinValue, metadataResponse.LatestViewDate);
-            Assert.Equal((uint)payload.Length, metadataResponse.SizeInBytes);
+            Assert.True(IdGenerator.IsType(metadataResponse.FileId,IdType.File));
+            Assert.True(IdGenerator.IsType(metadataResponse.RevisionId, IdType.FileBlob));
+            Assert.Equal(4u,metadataResponse.QuickNumber);
+            
         }
-
-
+        
         [Fact]
         public async void FileUpload_InvalidData()
         {
@@ -124,60 +133,43 @@ namespace LessPaper.WriteService.UnitTest
             guardMock.Setup(api => api.AddFile(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<int>(),
                 It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<Dictionary<string, string>>(),
                 It.IsAny<DocumentLanguage>(),
                 It.IsAny<ExtensionType>())).ReturnsAsync(4);
 
-            var bucketMock = new Mock<IWriteableBucket>();
-            bucketMock.Setup(x => x.UploadFileEncrypted(
+            var bucketMock = new Mock<IWritableBucket>();
+            bucketMock.Setup(x => x.UploadEncrypted(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 It.IsAny<byte[]>(),
-                It.IsAny<Stream>())).ReturnsAsync(true);
+                It.IsAny<Stream>()));
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, bucketMock.Object, queueMock.Object);
 
-            // Invalid key length
-            var invalidKeyPayload = new UploadFileRequest
-            {
-                DocumentLanguage = DocumentLanguage.German,
-                EncryptedKey = Convert.ToBase64String(ivAndKey1),
-                Name = "MyFile.pdf",
-                PlaintextKey = "MyInvalidKey",
-                File = new FormFile(stream, 0, payload.Length, "", "")
-            };
-            var response = await writeObjectsController.UploadFile(invalidKeyPayload, IdGenerator.NewId(IdType.Directory), 0);
-            Assert.IsType<BadRequestResult>(response);
 
-            // No file name
-            var noFileNamePayload = new UploadFileRequest
+            var requestPayload = new UploadFileDto
             {
                 DocumentLanguage = DocumentLanguage.German,
-                EncryptedKey = Convert.ToBase64String(ivAndKey1),
-                Name = null,
+                EncryptedKey = new Dictionary<string, string>()
+                {
+                    {user1Id, user1EncFileKey.Substring(0,8)}
+                },
+                FileName = "MyFile.pdf",
                 PlaintextKey = Convert.ToBase64String(ivAndKey2),
+                FileExtension = ExtensionType.Pdf,
                 File = new FormFile(stream, 0, payload.Length, "", "")
             };
-            response = await writeObjectsController.UploadFile(noFileNamePayload, IdGenerator.NewId(IdType.Directory), 0);
-            Assert.IsType<BadRequestResult>(response);
-            
-            // No file
-            var noFilePayload = new UploadFileRequest
-            {
-                DocumentLanguage = DocumentLanguage.German,
-                EncryptedKey = Convert.ToBase64String(ivAndKey1),
-                Name = "MyFile",
-                PlaintextKey = Convert.ToBase64String(ivAndKey2),
-                File = null
-            };
-            response = await writeObjectsController.UploadFile(noFilePayload, IdGenerator.NewId(IdType.Directory), 0);
-            Assert.IsType<BadRequestResult>(response);
+
+            var response = await writeObjectsController.UploadFile(requestPayload, IdGenerator.NewId(IdType.Directory), user1Id);
+            Assert.IsType<BadRequestObjectResult>(response);
 
         }
-
-
+        
         [Fact]
         public async void FileUpload_throws()
         {
@@ -188,32 +180,40 @@ namespace LessPaper.WriteService.UnitTest
             guardMock.Setup(api => api.AddFile(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<int>(),
                 It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<Dictionary<string, string>>(),
                 It.IsAny<DocumentLanguage>(),
                 It.IsAny<ExtensionType>())).Throws<InvalidOperationException>();
 
-            var bucketMock = new Mock<IWriteableBucket>();
-            bucketMock.Setup(x => x.UploadFileEncrypted(
+            var bucketMock = new Mock<IWritableBucket>();
+            bucketMock.Setup(x => x.UploadEncrypted(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 It.IsAny<byte[]>(),
-                It.IsAny<Stream>())).ReturnsAsync(true);
+                It.IsAny<Stream>()));
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, bucketMock.Object, queueMock.Object);
-            
-            var validRequestPayload = new UploadFileRequest
+
+
+            var requestPayload = new UploadFileDto
             {
                 DocumentLanguage = DocumentLanguage.German,
-                EncryptedKey = Convert.ToBase64String(ivAndKey1),
-                Name = "MyFile.pdf",
+                EncryptedKey = new Dictionary<string, string>()
+                {
+                    {user1Id, user1EncFileKey}
+                },
+                FileName = "MyFile.pdf",
                 PlaintextKey = Convert.ToBase64String(ivAndKey2),
+                FileExtension = ExtensionType.Pdf,
                 File = new FormFile(stream, 0, payload.Length, "", "")
             };
 
-            var response = await writeObjectsController.UploadFile(validRequestPayload, IdGenerator.NewId(IdType.Directory), 0);
-            Assert.IsType<BadRequestResult>(response);
+            var response = await writeObjectsController.UploadFile(requestPayload, IdGenerator.NewId(IdType.Directory), user1Id);
+            Assert.IsType<ObjectResult>(response);
         }
         
         [Fact]
@@ -227,7 +227,7 @@ namespace LessPaper.WriteService.UnitTest
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .ReturnsAsync(IdGenerator.NewId(IdType.Directory));
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, null, queueMock.Object);
 
@@ -236,25 +236,25 @@ namespace LessPaper.WriteService.UnitTest
                 SubDirectoryName = "MySubDir"
             };
 
-            var response = await writeObjectsController.CreateDirectory(IdGenerator.NewId(IdType.Directory), request);
+            var response = await writeObjectsController.CreateDirectory(IdGenerator.NewId(IdType.Directory),user1Id, request);
             var metadataResponseObject = Assert.IsType<OkObjectResult>(response);
             var newDirectoryId = Assert.IsType<string>(metadataResponseObject.Value);
 
             Assert.True(IdGenerator.TypeFromId(newDirectoryId, out var typeOfId));
             Assert.Equal(IdType.Directory, typeOfId);
         }
-
+        
         [Fact]
-        public async void UpdateMetadata_Correct()
+        public async void RenameObject_Correct()
         {
             var optionsMock = GetAppSettingsMock();
             var queueMock = GetQueueMock();
 
             var guardMock = new Mock<IGuardApi>();
-            guardMock.Setup(api => api.UpdateObjectMetadata(
+            guardMock.Setup(api => api.RenameObject(
                     It.IsAny<string>(),
-                    It.IsAny<IMetadataUpdate>()))
-                .ReturnsAsync(true);
+                    It.IsAny<string>(),
+                    It.IsAny<string>())).ReturnsAsync(true);
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, null, queueMock.Object);
 
@@ -264,81 +264,54 @@ namespace LessPaper.WriteService.UnitTest
                 ObjectName = "NewDirectoryName"
             };
             
-            var response = await writeObjectsController.UpdateObjectMetadata(request, IdGenerator.NewId(IdType.Directory), 0);
+            var response = await writeObjectsController.RenameObject(user1Id,IdGenerator.NewId(IdType.Directory),  "newDirectoryName");
             Assert.IsType<OkResult>(response);
         }
-
+        
         [Fact]
-        public async void UpdateMetadata_InvalidData()
+        public async void RenameObject_InvalidData()
         {
             var optionsMock = GetAppSettingsMock();
             var queueMock = GetQueueMock();
 
             var guardMock = new Mock<IGuardApi>();
-            guardMock.Setup(api => api.UpdateObjectMetadata(
-                    It.IsAny<string>(),
-                    It.IsAny<IMetadataUpdate>()))
-                .ReturnsAsync(true);
+            guardMock.Setup(api => api.RenameObject(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>())).ReturnsAsync(true);
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, null, queueMock.Object);
 
             // No object name
-            var noObjectNameRequest = new UpdateObjectMetaDataRequest
-            {
-                ParentDirectoryIds = new[] { IdGenerator.NewId(IdType.Directory) },
-                ObjectName = null
-            };
-
-            var response = await writeObjectsController.UpdateObjectMetadata(noObjectNameRequest, IdGenerator.NewId(IdType.Directory), 0);
+            var response = await writeObjectsController.RenameObject(user1Id,IdGenerator.NewId(IdType.Directory), null);
             Assert.IsType<BadRequestResult>(response);
-            
-
-            // No object name
-            var parentDirectoryHasFileIdRequest = new UpdateObjectMetaDataRequest
-            {
-                ParentDirectoryIds = new[] { IdGenerator.NewId(IdType.File) },
-                ObjectName = "Abc"
-            };
-
-            response = await writeObjectsController.UpdateObjectMetadata(parentDirectoryHasFileIdRequest, IdGenerator.NewId(IdType.Directory), 0);
-            Assert.IsType<BadRequestResult>(response);
-
             
             // Invalid target object id 
-            var validRequest = new UpdateObjectMetaDataRequest
-            {
-                ParentDirectoryIds = new[] { IdGenerator.NewId(IdType.Directory) },
-                ObjectName = "Abc"
-            };
-
-            response = await writeObjectsController.UpdateObjectMetadata(validRequest, IdGenerator.NewId(IdType.Undefined), 0);
+            response = await writeObjectsController.RenameObject( user1Id, IdGenerator.NewId(IdType.Undefined),"Abc");
             Assert.IsType<BadRequestResult>(response);
         }
 
+        
         [Fact]
-        public async void UpdateMetadata_Throws()
+        public async void RenameObject_Throws()
         {
             var optionsMock = GetAppSettingsMock();
             var queueMock = GetQueueMock();
 
             var guardMock = new Mock<IGuardApi>();
-            guardMock.Setup(api => api.UpdateObjectMetadata(
+            guardMock.Setup(api => api.RenameObject(
                     It.IsAny<string>(),
-                    It.IsAny<IMetadataUpdate>()))
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
                 .Throws<InvalidOperationException>();
 
             var writeObjectsController = new WriteObjectsController(optionsMock.Object, guardMock.Object, null, queueMock.Object);
 
-            var request = new UpdateObjectMetaDataRequest()
-            {
-                ParentDirectoryIds = new[] { IdGenerator.NewId(IdType.Directory) },
-                ObjectName = "NewDirectoryName"
-            };
-
-            var response = await writeObjectsController.UpdateObjectMetadata(request, IdGenerator.NewId(IdType.Directory), 0);
+            var response = await writeObjectsController.RenameObject(user1Id, IdGenerator.NewId(IdType.Directory),"Abc");
             Assert.IsType<BadRequestResult>(response);
         }
 
+        /*
         [Fact]
         public async void DeleteObject_Correct()
         {
@@ -390,5 +363,7 @@ namespace LessPaper.WriteService.UnitTest
             var response = await writeObjectsController.DeleteObject(IdGenerator.NewId(IdType.File), 0);
             Assert.IsType<BadRequestResult>(response);
         }
+        */
+        
     }
 }

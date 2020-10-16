@@ -67,20 +67,5 @@ namespace LessPaper.WriteService.Controllers.v1
             logger.LogInformation("User created successfully");
             return new ObjectResult(new MessageDto("User created")) { StatusCode = StatusCodes.Status201Created };
         }
-
-        [HttpGet("{email}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetUserInformation([FromRoute] string email)
-        {
-            if (!ValidationHelper.IsValidEmailAddress(email))
-                return BadRequest();
-
-            var userInformation = await guardApi.GetUserInformation(email);
-            if (userInformation == null)
-                return BadRequest();
-
-            return new OkObjectResult(new ExtendedUserInformationDto(userInformation));
-        }
     }
 }

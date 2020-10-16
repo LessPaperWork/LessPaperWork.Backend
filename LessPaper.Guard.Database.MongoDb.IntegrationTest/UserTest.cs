@@ -75,12 +75,25 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
 
 
         [Fact]
-        public async void UserGetInfo()
+        public async void UserGetBasicInfo()
         {
             Assert.True(await UserManager.InsertUser(User1Id, User1RootDirId, User1Email, User1HashedPassword, User1Salt, User1Keys.PublicKey, User1Keys.PrivateKey));
             Assert.True(await UserManager.InsertUser(User2Id, User2RootDirId, User2Email, User2HashedPassword, User2Salt, User2Keys.PublicKey, User2Keys.PrivateKey));
 
             var user = await UserManager.GetBasicUserInformation(User1Id, User1Id);
+            Assert.Equal(User1Id, user.UserId);
+            Assert.Equal(User1Email, user.Email);
+            Assert.Equal(User1Keys.PublicKey, user.PublicKey);
+        }
+        
+        
+        [Fact]
+        public async void UserGetInfo()
+        {
+            Assert.True(await UserManager.InsertUser(User1Id, User1RootDirId, User1Email, User1HashedPassword, User1Salt, User1Keys.PublicKey, User1Keys.PrivateKey));
+            Assert.True(await UserManager.InsertUser(User2Id, User2RootDirId, User2Email, User2HashedPassword, User2Salt, User2Keys.PublicKey, User2Keys.PrivateKey));
+
+            var user = await UserManager.GetUserInformation(User1Email);
             Assert.Equal(User1Email, user.Email);
             Assert.Equal(User1HashedPassword, user.PasswordHash);
             Assert.Equal(User1RootDirId, user.RootDirectoryId);

@@ -84,22 +84,22 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
                 idC));
 
 
-            var rootDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId, null);
+            var rootDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId);
             Assert.Equal(2, rootDirectory.DirectoryChilds.Length);
             Assert.Contains(rootDirectory.DirectoryChilds, x => x.ObjectId == idA);
             Assert.Contains(rootDirectory.DirectoryChilds, x => x.ObjectId == idB);
             Assert.Equal($"/{user1.RootDirectoryId}", rootDirectory.Path);
 
-            var aDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idA, null);
+            var aDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idA);
             Assert.Single(aDirectory.DirectoryChilds);
             Assert.Contains(aDirectory.DirectoryChilds, x => x.ObjectId == idC);
             Assert.Equal($"/{user1.RootDirectoryId}/{idA}", aDirectory.Path);
 
-            var bDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idB, null);
+            var bDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idB);
             Assert.Empty(bDirectory.DirectoryChilds);
             Assert.Equal($"/{user1.RootDirectoryId}/{idB}", bDirectory.Path);
 
-            var cDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idC, null);
+            var cDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idC);
             Assert.Empty(cDirectory.DirectoryChilds);
             Assert.Equal($"/{user1.RootDirectoryId}/{idA}/{idC}", cDirectory.Path);
 
@@ -116,22 +116,22 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
             // |
             // C
 
-            rootDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId, null);
+            rootDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId);
             Assert.Single(rootDirectory.DirectoryChilds);
             Assert.Contains(rootDirectory.DirectoryChilds, x => x.ObjectId == idB);
             Assert.Equal($"/{user1.RootDirectoryId}", rootDirectory.Path);
 
-            aDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idA, null);
+            aDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idA);
             Assert.Single(aDirectory.DirectoryChilds);
             Assert.Contains(aDirectory.DirectoryChilds, x => x.ObjectId == idC);
             Assert.Equal($"/{user1.RootDirectoryId}/{idB}/{idA}", aDirectory.Path);
 
-            bDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idB, null);
+            bDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idB);
             Assert.Single(bDirectory.DirectoryChilds);
             Assert.Contains(bDirectory.DirectoryChilds, x => x.ObjectId == idA);
             Assert.Equal($"/{user1.RootDirectoryId}/{idB}", bDirectory.Path);
 
-            cDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idC, null);
+            cDirectory = await DirectoryManager.GetDirectoryMetadata(user1.UserId, idC);
             Assert.Empty(cDirectory.DirectoryChilds);
             Assert.Equal($"/{user1.RootDirectoryId}/{idB}/{idA}/{idC}", cDirectory.Path);
         }
@@ -184,7 +184,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
 
 
             // Ensure metadata is updated
-            var metadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId, null);
+            var metadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId);
             Assert.Equal("Renamed dir!", metadata.ObjectName);
         }
 
@@ -200,7 +200,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
                 "Dir1",
                 subDirectoryId));
             
-            var rootDirectoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId, null);
+            var rootDirectoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId);
             Assert.Single(rootDirectoryMetadata.DirectoryChilds);
             Assert.Equal(1u, rootDirectoryMetadata.NumberOfChilds);
             var subDirectoryMinimalMetadata = rootDirectoryMetadata.DirectoryChilds.First();
@@ -217,7 +217,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
             );
             
 
-            var subDirectoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId, null);
+            var subDirectoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId);
             Assert.Equal(subDirectoryId, subDirectoryMetadata.ObjectId);
             Assert.Equal("Dir1", subDirectoryMetadata.ObjectName);
             Assert.Equal($"/{user1.RootDirectoryId}/{subDirectoryId}", subDirectoryMetadata.Path);
@@ -242,7 +242,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
                 await DirectoryManager.Delete(user1.UserId, user1.RootDirectoryId)
             );
           
-            var metadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId, null);
+            var metadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId);
             Assert.NotNull(metadata);
         }
 
@@ -262,7 +262,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
 
 
             await Assert.ThrowsAsync<ObjectNotResolvableException>(
-                async () => await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId, null));
+                async () => await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId));
 
         }
 

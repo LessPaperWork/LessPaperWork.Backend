@@ -47,6 +47,7 @@ namespace LessPaper.WriteService.Controllers.v1
         [HttpPost("/files/{directoryId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UploadFile(
             [FromBody] UploadFileDto fileData,
             [FromRoute] string directoryId,
@@ -71,12 +72,12 @@ namespace LessPaper.WriteService.Controllers.v1
   
             if (fileData.EncryptedKey.Count == 0 ||
                 !fileData.EncryptedKey.ContainsKey(requestingUserId) ||
-                fileData.EncryptedKey.Any(x => string.IsNullOrWhiteSpace(x.Key) || string.IsNullOrWhiteSpace(x.Value)) ||
+                fileData.EncryptedKey.Any(x => string.IsNullOrWhiteSpace(x.Key) || string.IsNullOrWhiteSpace(x.Value) || x.Value.Length < 16) ||
                 string.IsNullOrWhiteSpace(fileData.PlaintextKey))
             {
                 return BadRequest(new MessageDto("Encrypted keys are not valid"));
             }
-
+            
             var fileSize = (int)fileData.File.Length;
             var plaintextKeyBytes = Convert.FromBase64String(fileData.PlaintextKey);
             // Make sure the iv is 16 Bytes long and the key has exactly 32 Byte. 
@@ -137,7 +138,7 @@ namespace LessPaper.WriteService.Controllers.v1
                 // TODO Remove file if database failed
                 // TODO Write queue data to database if queue fails
 
-                Console.Write(e);
+                // Console.Write(e);
                 return new ObjectResult(new MessageDto("Database operation not successful"))
                 {
                     StatusCode = StatusCodes.Status500InternalServerError
@@ -202,7 +203,7 @@ namespace LessPaper.WriteService.Controllers.v1
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RenameObject(
-            [FromQuery]string requestingUserId,
+            [FromQuery] string requestingUserId,
             [FromQuery] string objectId,
             [FromQuery] string newName)
         {

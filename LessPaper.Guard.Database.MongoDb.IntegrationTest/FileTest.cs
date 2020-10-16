@@ -144,7 +144,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
             );
 
 
-            var directoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId, null);
+            var directoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId);
             var fileMetadata = await FileManager.GetFileMetadata(user1.UserId, fileId, revisionId);
             
             Assert.Single(fileMetadata.Permissions);
@@ -189,7 +189,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
             );
 
             // Check if root directory contains the file
-            var directoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId, null);
+            var directoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, user1.RootDirectoryId);
             Assert.Single(directoryMetadata.FileChilds);
             Assert.Equal(fileId, directoryMetadata.FileChilds.First().ObjectId);
 
@@ -200,7 +200,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
             // Move file to sub directory
             Assert.True(await FileManager.Move(user1.UserId, fileId, subDirectoryId));
 
-            directoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId, null);
+            directoryMetadata = await DirectoryManager.GetDirectoryMetadata(user1.UserId, subDirectoryId);
             fileMetadata = await FileManager.GetFileMetadata(user1.UserId, fileId, revisionId);
 
             Assert.Single(directoryMetadata.FileChilds);

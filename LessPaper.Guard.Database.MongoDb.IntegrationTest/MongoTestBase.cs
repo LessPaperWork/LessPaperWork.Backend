@@ -11,7 +11,7 @@ namespace LessPaper.Guard.Database.MongoDb.IntegrationTest
 
         public MongoTestBase()
         {
-            var settings = new DatabaseSettings("mongodb://192.168.0.227:28017?retryWrites=false");
+            var settings = new DatabaseSettings("mongodb://localhost:28017?retryWrites=false");
             var databaseManager = new DatabaseManager(settings);
 
             UserManager = new DbUserManager(databaseManager);

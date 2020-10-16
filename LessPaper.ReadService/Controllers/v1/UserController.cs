@@ -30,7 +30,7 @@ namespace LessPaper.ReadService.Controllers.v1
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetUserInformation(
-            [FromRoute] [SwaggerParameterExample("test@swagger.de")] string email)
+            [FromRoute] [SwaggerParameterExample("test@swaggerui.de")] string email)
         {
             if (!ValidationHelper.IsValidEmailAddress(email))
                 return BadRequest();
