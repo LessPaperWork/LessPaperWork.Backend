@@ -6,6 +6,9 @@
 Environment/Minio/TestCertificates/CAs
 Environment/MongoDB/mongo/instances
 
+## Nix Shell
+!Nix/default.nix
+
 ## Exlcude binary directories
 /**/Debug
 /**/Release
