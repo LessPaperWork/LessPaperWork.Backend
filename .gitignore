@@ -2,6 +2,9 @@
 *
 !/**/
 
+## Linux git warning fix
+Environment/Minio/TestCertificates/CAs
+Environment/MongoDB/mongo/instances
 
 ## Exlcude binary directories
 /**/Debug

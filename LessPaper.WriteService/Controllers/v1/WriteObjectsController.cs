@@ -2,7 +2,6 @@
 using LessPaper.Shared.Helper;
 using LessPaper.Shared.Interfaces.GuardApi;
 using LessPaper.Shared.Queueing.Models.Dto.v1;
-using LessPaper.WriteService.Models.Request;
 using LessPaper.WriteService.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -161,7 +160,7 @@ namespace LessPaper.WriteService.Controllers.v1
         public async Task<IActionResult> CreateDirectory(
             [FromRoute] string directoryId,
             [FromQuery] string requestingUserId,
-            [FromBody] CreateDirectoryDto createDirectoryDto
+            [FromBody] string subDirectoryName
         )
         {
             #region - Input data validation -
@@ -169,7 +168,7 @@ namespace LessPaper.WriteService.Controllers.v1
             if (!IdGenerator.TypeFromId(directoryId, out var typOfId) || typOfId != IdType.Directory)
                 return BadRequest();
 
-            if (string.IsNullOrWhiteSpace(createDirectoryDto.SubDirectoryName))
+            if (string.IsNullOrWhiteSpace(subDirectoryName))
                 return BadRequest();
 
             #endregion
@@ -180,7 +179,7 @@ namespace LessPaper.WriteService.Controllers.v1
                 var newDirectoryId = await guardApi.AddDirectory(
                     requestingUserId,
                     directoryId,
-                    createDirectoryDto.SubDirectoryName);
+                    subDirectoryName);
 
                 if (!IdGenerator.IsType(newDirectoryId, IdType.Directory))
                     return BadRequest();
@@ -293,7 +292,7 @@ namespace LessPaper.WriteService.Controllers.v1
 
             if (!IdGenerator.IsType(requestingUserId, IdType.User) ||
                 !IdGenerator.TypeFromId(objectId, out var typOfId) ||
-                (typOfId != IdType.Directory && typOfId != IdType.File && typOfId != IdType.FileBlob || typOfId != IdType.User))
+                (typOfId != IdType.Directory && typOfId != IdType.File && typOfId != IdType.FileBlob || typOfId == IdType.User))
                 return BadRequest();
 
             #endregion
